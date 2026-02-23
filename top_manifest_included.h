@@ -1,0 +1,1 @@
+#include "NanoGraph_Platform/top_manifest.h"
