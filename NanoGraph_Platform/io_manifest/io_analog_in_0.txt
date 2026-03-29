@@ -1,0 +1,10 @@
+; ------------------------------------------------------------------------------------------------------------
+; Manifest of analog A/D input ("motion" or "analog_in" or "gpio" domain) 
+; ------------------------------------------------------------------------------------------------------------
+                                                                       
+    io_analog_in_0                      ; name for the tools                            
+    analog_in                           ; domain name,   unit: dB, Vrms
+
+    io_direction_rx0tx1 1
+
+end

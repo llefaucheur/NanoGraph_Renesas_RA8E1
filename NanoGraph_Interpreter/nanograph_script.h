@@ -32,7 +32,7 @@
 #ifndef cNanoGraph_script_H
 #define cNanoGraph_script_H
 
-#include "../nanograph_store_included.h"
+#include "../nanograph_common.h"
 #include "nanograph_const.h"      
 #include "nanograph_types.h"  
 #include "nanograph_extern.h"
@@ -122,6 +122,7 @@ typedef union
         uint8_t nstack;          
         uint8_t nregs;          
         uint8_t errors;
+        uint8_t entry_param;             /* selection of entry or exit script codes => "shadow register" */
         uint8_t test_flag;              /* test result */
         uint8_t compact;                /* indexes are packed in a single W32 */
         uint8_t inst_nbw32;             /* number of words of the instruction */

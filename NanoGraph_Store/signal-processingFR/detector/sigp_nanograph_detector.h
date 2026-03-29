@@ -152,7 +152,7 @@ typedef struct
 
 extern void sigp_nanograph_detector_process (sigp_detector_instance *instance, 
                      int16_t *in, int32_t inputLength, 
-                     int32_t *pResult);
+                     int16_t *pResult);
 
 #endif //csigp_NANOGRAPH_DETECTOR_H
 

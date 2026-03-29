@@ -73,8 +73,7 @@ typedef struct
     uint32_t *linked_list;                      // linked-list of nodes
     const p_io_function_ctrl *platform_io;      // access to IO (asynchronous IO, reset, set params)
     const p_nanograph_node *node_entry_points;     // list of installed nodes
-    uint64_t *bit_field_services;               // int64[GROUP] of [FUNCTION] bits to the plaform services
-
+    
     /* only in RAM section */
     uint32_t *all_formats;                      // indexed stream formats (can be changed by the nodes)
     uint32_t *all_arcs;             
@@ -97,9 +96,11 @@ typedef struct
     uint8_t ongoing_async_IO[MAX_IO_ONGOING_BYTES]; // asynchronous/slave IOs managed by this interpreter instance/processor
     uint8_t node_memory_banks_offset;           // offset in words  
     uint8_t node_parameters_offset;             // 
-    uint8_t main_script;                        // debug script common to all nodes
+    uint8_t main_script;                        // debug script common to all nodes, profiling, reads the use_case and global_opp
     uint8_t nb_graph_io;                        // number of graph IOs
     uint8_t error_log;                          // bit-field of logged errors 
+    uint8_t use_case;                           // parameter
+    uint8_t global_opp;                         // operation performance point decided by the application
 
 } nanograph_instance_t;
 

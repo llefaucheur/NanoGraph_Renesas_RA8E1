@@ -38,6 +38,9 @@
 #ifdef _MSC_VER
 #include <stdio.h>
 #endif
+#ifdef __linux__
+#include <stdio.h>
+#endif
 
 #include "sigp_nanograph_detector.h"
 
@@ -67,7 +70,7 @@
  */
 void sigp_nanograph_detector_process (sigp_detector_instance *pinstance, 
                      int16_t *in, int32_t inputLength, 
-                     int32_t *pResult)
+                     int16_t *pResult)
 {
     int32_t isamp = 0;
     int32_t input_data;
@@ -123,10 +126,10 @@ void sigp_nanograph_detector_process (sigp_detector_instance *pinstance,
 
         /* only one sample is used to the output buffer to save the VAD result */
         if (DOWNCOUNTER > 0)
-        {   pResult[0] = 0x7FFFFFFFL;
+        {   pResult[isamp] = 0x7FFF;
         }
         else
-        {   pResult[0] = 0;
+        {   pResult[isamp] = 0;
         }
 
 #ifdef PLATFORM_COMPUTER        

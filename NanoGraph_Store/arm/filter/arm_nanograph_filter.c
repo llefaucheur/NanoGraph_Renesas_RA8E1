@@ -40,6 +40,55 @@
 #include "../../nanograph_store_common_types.h"
 #include "arm_nanograph_filter.h"
 
+
+const int16_t preset_coef [] = {
+        0x0100,             // CMSIS format, q15 format
+        0x0102,             // Two biquads, postShift
+        0, 16383, 0, 0, 0,  // bypass
+        0, 16383, 0, 0, 0
+};
+
+void arm_nanograph_filter_init_coefs(arm_filter_instance* pinstance, uint16_t* data);
+void arm_nanograph_filter_init_coefs(arm_filter_instance* pinstance, uint16_t* data)
+{
+    uint8_t* pt8bsrc;
+    uint8_t i;
+    uint8_t cmsisFormat, rawFormat, numStages, postShift;
+    uint16_t* pt16src, * pt16dst;
+
+    pt8bsrc = (uint8_t*)data;
+    pt16src = (uint16_t*)data;
+
+    cmsisFormat = *pt8bsrc++;
+    rawFormat = *pt8bsrc++;
+    numStages = *pt8bsrc++;
+    postShift = *pt8bsrc++;
+
+    pt16src = &(pt16src[2]);    /* skip the above 4bytes header */
+    pt16dst = (uint16_t*)(&(pinstance->TCM->coefs[0]));
+
+    for (i = 0; i < numStages; i++)
+    {   /* destination format:  {b10, 0, b11, b12, a11, a12,   b20, 0, b21, b22, a21, a22, ...} */
+        *pt16dst++ = *pt16src++;    // b10
+        *pt16dst++ = 0;             // 0
+        *pt16dst++ = *pt16src++;    // b11    
+        *pt16dst++ = *pt16src++;    // b12
+        *pt16dst++ = *pt16src++;    // a11
+        *pt16dst++ = *pt16src++;    // a12
+    }
+
+    /* optimized kernels INIT */
+    pinstance->iir_service = PACK_SERVICE(SERV_DSP_INIT, NOOPTION_SSRV, NOTAG_SSRV, SERV_DSP_CASCADE_DF1_Q15, SERV_GROUP_DSP_ML);
+
+    pinstance->services(                                            // void NanoGraph_services (      
+        pinstance->iir_service,                                     //      uint32_t command, 
+        (intptr_t) & (pinstance->TCM->biquad_cascade_df1_inst_q15),   //      intptr_t ptr1, 
+        (intptr_t) & (pinstance->TCM->coefs),                         //      intptr_t ptr2, 
+        (intptr_t) & (pinstance->TCM->state),                         //      intptr_t ptr3, 
+        (intptr_t)(numStages << 8u) | postShift                     //      intptr_t n)
+    );
+}
+
 void arm_nanograph_filter (uint32_t command, void *instance, void *data, uint32_t *status);
 
 /*
@@ -142,13 +191,14 @@ void arm_nanograph_filter(uint32_t command, void *instance, void *data, uint32_t
             uint8_t n;
             arm_filter_instance *pinstance;
             uint8_t preset;
-            uint16_t *pt16dst;
             intptr_t * memresult;
 
             preset = (uint8_t) RD(command, PRESET_CMD);
             memresult = (intptr_t * )instance;
             pinstance = (arm_filter_instance *)(memresult[0]);    /* first bank = node instance */
             pinstance->TCM = (arm_filter_memory *)(memresult[1]); /* second bank = fast memory allocation */
+
+            pinstance->services = (nanograph_services_t*)data;
 
             // DYNAMIC ALLOCATION EXAMPLE, CAN DEPEND ON ARCS FORMAT
             // if (NANOGRAPH_DYN_MALLOC == RD(command, COMMDEXT_CMD))
@@ -161,19 +211,22 @@ void arm_nanograph_filter(uint32_t command, void *instance, void *data, uint32_t
             n = sizeof(pinstance->TCM->state);
             for (i = 0; i < n; i++) { pt8b[i] = 0; }
 
-            /* load presets */
-            pt16dst = (uint16_t *)(&(pinstance->TCM->coefs[0]));
+            /* load presets 
+                #0 : bypass
+                #1 : coefficients from the parameter section, computed during GUI to graph translation, or manually inserted in the graph.
+                #2 : 4th order elliptic LPF 1/16 band -50dB
+                #3 : 4th order elliptic HPF 1/16 band -50dB
+                #4 : offset removal filter
+                #5 : Median filter, 5 points
+                #6 : Dithering filter
+            */
             switch (preset)
             {   default: 
                 case 0:     /* by-pass*/
-                    break;
-                case 1:     /* LPF fc=fs/4 */
-                    break;
-                case 2:     /* HPF fc=fs/8 */
+                    arm_nanograph_filter_init_coefs(pinstance, (uint16_t*)preset_coef);
                     break;
             }
 
-            pinstance->services = (nanograph_services_t *)data;
             break;
         }       
 
@@ -183,10 +236,7 @@ void arm_nanograph_filter(uint32_t command, void *instance, void *data, uint32_t
                 data = (one or all)
         */ 
         case NANOGRAPH_SET_PARAMETER:  
-        {   uint8_t *pt8bsrc;
-            uint8_t i; 
-            uint8_t cmsisFormat, rawFormat, numStages, postShift;
-            uint16_t *pt16src, *pt16dst;
+        {   
             arm_filter_instance *pinstance;
 
             pinstance = (arm_filter_instance *) instance;
@@ -200,37 +250,8 @@ void arm_nanograph_filter(uint32_t command, void *instance, void *data, uint32_t
                 5 s16; 681 -1342   681 26261 -15331     ; 
                 parameter_end                
             */
-            pt8bsrc = (uint8_t *) data;
-            pt16src = (uint16_t *) data;
+            arm_nanograph_filter_init_coefs(pinstance, (uint16_t*)data);
 
-            cmsisFormat = *pt8bsrc++;
-            rawFormat = *pt8bsrc++;
-            numStages = *pt8bsrc++;
-            postShift = *pt8bsrc++;
-
-            pt16src = &(pt16src[2]);    /* skip the above 4bytes header */
-            pt16dst = (uint16_t *)(&(pinstance->TCM->coefs[0]));
-
-            for (i = 0; i < numStages; i++)
-            {   /* destination format:  {b10, 0, b11, b12, a11, a12,   b20, 0, b21, b22, a21, a22, ...} */
-                *pt16dst++ = *pt16src++;    // b10
-                *pt16dst++ = 0;             // 0
-                *pt16dst++ = *pt16src++;    // b11    
-                *pt16dst++ = *pt16src++;    // b12
-                *pt16dst++ = *pt16src++;    // a11
-                *pt16dst++ = *pt16src++;    // a12
-            }
-
-            /* optimized kernels INIT */
-            pinstance->iir_service = PACK_SERVICE(SERV_DSP_INIT,NOOPTION_SSRV,NOTAG_SSRV, SERV_DSP_CASCADE_DF1_Q15,SERV_GROUP_DSP_ML);
-
-            pinstance->services(                                            // void NanoGraph_services (      
-                pinstance->iir_service,                                     //      uint32_t command, 
-                (intptr_t)&(pinstance->TCM->biquad_cascade_df1_inst_q15),   //      intptr_t ptr1, 
-                (intptr_t)&(pinstance->TCM->coefs),                         //      intptr_t ptr2, 
-                (intptr_t)&(pinstance->TCM->state),                         //      intptr_t ptr3, 
-                (intptr_t)(numStages << 8u) | postShift                     //      intptr_t n)
-                );
             break;
         }
 

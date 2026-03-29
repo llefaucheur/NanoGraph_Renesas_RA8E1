@@ -85,7 +85,7 @@ void nanograph_interpreter (uint32_t command,  nanograph_instance_t *S, uintptr_
 
         /* change the parameters of a node  : 
             usage: 
-                1) update the table of node_offset + parameters 
+                1) update the table of node_offset, OPP, parameters
                 2) call nano_graph_interpreter (NANOGRAPH_SET_PARAMETER, &instance, node offset, 0); 
          */
         case NANOGRAPH_SET_PARAMETER:
@@ -94,6 +94,15 @@ void nanograph_interpreter (uint32_t command,  nanograph_instance_t *S, uintptr_
             break;
         }
 
+        /* update operation performance point and use-case
+            nano_graph_interpreter (NANOGRAPH_SET_USE_CASE_OPP, &instance, (uintptr_t)use-case, (uintptr_t)opp);
+         */
+        case NANOGRAPH_SET_USE_CASE_OPP:
+        {
+            S->use_case = (uint8_t)ptr1;
+            S->global_opp = (uint8_t)ptr2;
+            break;
+        }
 
         /* usage: nano_graph_interpreter (NANOGRAPH_STOP, &instance, 0, 0); */
         case NANOGRAPH_STOP:

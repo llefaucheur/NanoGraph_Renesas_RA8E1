@@ -2,8 +2,6 @@
  * top_manifest.c
  * -------------------------------------------------------------------- */
 
-#ifndef top_manifest_ra8e1Pc
-#define top_manifest_ra8e1Pc
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,59 +15,73 @@
 -------------------------------------------------------------------------------------*/
 extern p_nanograph_node NanoGraph_null_task;          /*  0 */
 extern p_nanograph_node NanoGraph_script;             /*  1  #define NanoGraph_script_index 1 */
-//extern p_nanograph_node arm_nanograph_router;          /*  2 */
-//extern p_nanograph_node arm_nanograph_modulator;       /*  3 */
-//extern p_nanograph_node arm_nanograph_fixedbf;         /*  4 */
-//extern p_nanograph_node arm_nanograph_filter2D;        /*  5 */
-extern p_nanograph_node arm_nanograph_filter;            /*  6 */
-//extern p_nanograph_node arm_nanograph_demodulator;     /*  7 */
-                                                   /*  8 */
-//extern p_nanograph_node arm_nanograph_amplifier;       /*  9 */
-//extern p_nanograph_node sigp_kws;                   /* 10 */
-//extern p_nanograph_node sigp_nanograph_compressor;     /* 11 */
-//extern p_nanograph_node sigp_nanograph_decompressor;   /* 12 */
-extern p_nanograph_node sigp_nanograph_detector;         /* 13 */
-//extern p_nanograph_node sigp_nanograph_detector2D;     /* 14 */
-//extern p_nanograph_node sigp_nanograph_resampler;      /* 15 */
-//extern p_nanograph_node bitbank_JPEGENC;            /* 16 */
-//extern p_nanograph_node TjpgDec;                    /* 17 */
+
+  extern p_nanograph_node arm_nanograph_filter;         /*  4 */
+
+  extern p_nanograph_node sigp_nanograph_detector;      /*  8 */
+
 
 
 const p_nanograph_node node_entry_points[NB_NODE_ENTRY_POINTS] =
 {
     /*  0 */ (p_nanograph_node)&NanoGraph_null_task,       /* ID | PROC ARCH    */
-    /*  1 */ (p_nanograph_node)&NanoGraph_script,          /*  1 |   0   0      byte-code interpreter, index "NanoGraph_script_INDEX" */
-    /*  2 */ (p_nanograph_node)0,                          /*  2 |   0   1      copy input arcs and subchannel and output arcs and subchannels   */
-    /*  3 */ (p_nanograph_node)0,                          /*  3 |   0   1      signal generator with modulation */
-    /*  4 */ (p_nanograph_node)0,                          /*  4 |   0   1
-    /*  5 */ (p_nanograph_node)0,                          /*  5 |   0   1      2D processing on the HP processor PROC_ID=2 */
-    /*  6 */ (p_nanograph_node)&arm_nanograph_filter,         /*  6 |   0   1      cascade of DF1 filters */
-    /*  7 */ (p_nanograph_node)0,                          /*  7 |   0   1      signal demodulator, frequency estimator */
-    /*  8 */ (p_nanograph_node)0,                          /*  8 |   0   1
-    /*  9 */ (p_nanograph_node)0,                          /*  9 |   0   1      amplifier mute and un-mute with ramp and delay control */
-    /* 10 */ (p_nanograph_node)0,                          /* 10 |   0   1      YES/NO KWS */
-    /* 11 */ (p_nanograph_node)0,                          /* 11 |   0   1      raw data compression with adaptive prediction */
-    /* 12 */ (p_nanograph_node)0,                          /* 12 |   0   1      raw data decompression */
-    /* 13 */ (p_nanograph_node)&sigp_nanograph_detector,      /* 13 |   0   1      estimates peaks/floor of the mono input and triggers a flag on high SNR */
-    /* 14 */ (p_nanograph_node)0,                          /* 14 |   0   1      2D processing on the HP processor PROC_ID=2 */
-    /* 15 */ (p_nanograph_node)0,                          /* 15 |   0   1      asynchronous sample-rate converter */
-    /* 16 */ (p_nanograph_node)0,                          /* 16 |   0   1      bitbank_JPEGENC */
-    /* 17 */ (p_nanograph_node)0,                          /* 17 |   0   1      TjpgDec */
+    /*  1 */ (p_nanograph_node)&NanoGraph_script,             /*  1 |   0   0    */
+    /*  2 */ 0, // (p_nanograph_node)&arm_nanograph_router,         /*  2 |   0   1    */
+    /*  3 */ 0, // (p_nanograph_node)&arm_nanograph_amplifier,      /*  3 |   0   1    */
+    /*  4 */ (p_nanograph_node)&arm_nanograph_filter,         /*  4 |   0   1    */
+    /*  5 */ 0, // (p_nanograph_node)&arm_nanograph_modulator,      /*  5 |   0   1    */
+    /*  6 */ 0, // (p_nanograph_node)&arm_nanograph_demodulator,    /*  6 |   0   1    */
+    /*  7 */ 0, // (p_nanograph_node)&arm_nanograph_filter2D,       /*  7 |   0   1    */
+    /*  8 */ (p_nanograph_node)&sigp_nanograph_detector,      /*  8 |   0   1    */
+    /*  9 */ 0, // (p_nanograph_node)&sigp_nanograph_detector2D,    /*  9 |   0   1    */
+    /* 10 */ 0, // (p_nanograph_node)&sigp_nanograph_resampler,     /* 10 |   0   1    */
+    /* 11 */ 0, // (p_nanograph_node)&sigp_nanograph_compressor,    /* 11 |   0   1    */
+    /* 12 */ 0, // (p_nanograph_node)&sigp_nanograph_decompressor,  /* 12 |   0   1    */
+    /* 13 */ 0, // (p_nanograph_node)&bitbank_JPEGENC,              /* 13 |   0   1    */
+    /* 14 */ 0, // (p_nanograph_node)&TjpgDec,                      /* 14 |   0   1    */
 };
 
 
+/* 
+    IO interfaces functions to the possible streams of the platform
+*/
 extern void data_sink     (uint32_t, nanograph_xdmbuffer_t *);  // 0
-extern void data_in_1     (uint32_t, nanograph_xdmbuffer_t *);  // 1
-extern void analog_in_0   (uint32_t, nanograph_xdmbuffer_t *);  // 2
-extern void motion_in_0   (uint32_t, nanograph_xdmbuffer_t *);  // 3
-extern void audio_in_0    (uint32_t, nanograph_xdmbuffer_t *);  // 4
-extern void sensor_2d_in_0(uint32_t, nanograph_xdmbuffer_t *);  // 5
-extern void line_out_0    (uint32_t, nanograph_xdmbuffer_t *);  // 6
-extern void gpio_out_0    (uint32_t, nanograph_xdmbuffer_t *);  // 7
-extern void gpio_out_1    (uint32_t, nanograph_xdmbuffer_t *);  // 8
-extern void data_out_0    (uint32_t, nanograph_xdmbuffer_t *);  // 9
+extern void io_data_in_0        (uint32_t, nanograph_xdmbuffer_t *);  //  1
+extern void io_data_in_1        (uint32_t, nanograph_xdmbuffer_t *);  //  2
+extern void io_data_out_0       (uint32_t, nanograph_xdmbuffer_t *);  //  3
+extern void io_data_out_1       (uint32_t, nanograph_xdmbuffer_t *);  //  4
+extern void io_sensor_in_0      (uint32_t, nanograph_xdmbuffer_t *);  //  5
+//extern void io_sensor_in_1      (uint32_t, nanograph_xdmbuffer_t *);  //  6
+//extern void io_sensor_in_2      (uint32_t, nanograph_xdmbuffer_t *);  //  7
+//extern void io_sensor_in_3      (uint32_t, nanograph_xdmbuffer_t *);  //  8
+extern void io_timer_0          (uint32_t, nanograph_xdmbuffer_t *);  //  9
+//extern void io_timer_1          (uint32_t, nanograph_xdmbuffer_t *);  // 10
+extern void io_ui_in_0          (uint32_t, nanograph_xdmbuffer_t *);  // 11
+//extern void io_ui_in_1          (uint32_t, nanograph_xdmbuffer_t *);  // 12
+//extern void io_ui_in_2          (uint32_t, nanograph_xdmbuffer_t *);  // 13
+//extern void io_ui_in_3          (uint32_t, nanograph_xdmbuffer_t *);  // 14
+extern void io_ui_out_0         (uint32_t, nanograph_xdmbuffer_t *);  // 15
+//extern void io_ui_out_1         (uint32_t, nanograph_xdmbuffer_t *);  // 16
+//extern void io_ui_out_2         (uint32_t, nanograph_xdmbuffer_t *);  // 17
+//extern void io_ui_out_3         (uint32_t, nanograph_xdmbuffer_t *);  // 18
+extern void io_serial_in_0      (uint32_t, nanograph_xdmbuffer_t *);  // 19
+//extern void io_serial_out_0     (uint32_t, nanograph_xdmbuffer_t *);  // 20
+extern void io_analog_in_0      (uint32_t, nanograph_xdmbuffer_t *);  // 21
+//extern void io_analog_out_0     (uint32_t, nanograph_xdmbuffer_t *);  // 22
+extern void io_audio_in_0       (uint32_t, nanograph_xdmbuffer_t *);  // 23
+//extern void io_audio_in_1       (uint32_t, nanograph_xdmbuffer_t *);  // 24
+//extern void io_audio_in_2       (uint32_t, nanograph_xdmbuffer_t *);  // 25
+extern void io_audio_out_0      (uint32_t, nanograph_xdmbuffer_t *);  // 26
+//extern void io_audio_out_1      (uint32_t, nanograph_xdmbuffer_t *);  // 27
+//extern void io_audio_out_2      (uint32_t, nanograph_xdmbuffer_t *);  // 28
+extern void io_2d_in_0          (uint32_t, nanograph_xdmbuffer_t *);  // 30
+//extern void io_2d_in_1          (uint32_t, nanograph_xdmbuffer_t *);  // 31
+//extern void io_2d_out_0         (uint32_t, nanograph_xdmbuffer_t *);  // 32
+//extern void io_2d_out_1         (uint32_t, nanograph_xdmbuffer_t *);  // 33
 
-/*  index to the current graph interpreter instance  */
+/*  
+    global read-only index to the current graph interpreter instance 
+*/
 uint8_t platform_io_instance_idx;
 nanograph_instance_t* platform_io_callback_parameter;
 extern uintptr_t all_ptr_instances[NANOGRAPH_NB_INSTANCE];
@@ -77,111 +89,98 @@ extern uintptr_t all_ptr_instances[NANOGRAPH_NB_INSTANCE];
 
 
 
-#if PLATFORM_PROCESSOR == 1
 /* ------------------------------------------------
-                TOP_MANIFEST_ra8e1.TXT
+       Memory map of the platform
+       see top_manifest_platform.txt
   ------------------------------------------------ */
 uint8_t MEXT[SIZE_MBANK_DMEM_EXT];  
-extern const int16_t tstaudio_in_m1[]; /* test pattern audio */
-
-//uint8_t DTCM[SIZE_MBANK_DTCM];
-//uint8_t ITCM[SIZE_MBANK_ITCM];
-//uint8_t BACKUP[SIZE_MBANK_RETENTION];
+uint8_t DTCM[SIZE_MBANK_DTCM];
+uint8_t ITCM[SIZE_MBANK_ITCM];
+uint8_t BACKUP[SIZE_MBANK_RETENTION];
 
 const uint8_t* long_offset[MAX_PROC_MEMBANK] =
-{ &(MEXT[0]), (uint8_t *)tstaudio_in_m1 /*, &(DTCM[0]), &(ITCM[0]), &(BACKUP[0]) */};
+{ &(MEXT[0]), &(DTCM[0]), &(ITCM[0]), &(BACKUP[0]) };
+
+
+uint8_t one_file_is_closed;         /* flag used to exit */
 
 /*---------------------------------------------------------
-  IO AFFINITY WITH PROCESSOR 1 = ALL IOs EXCEPT THE CAMERA  
+  IO AFFINITY WITH PROCESSOR  
   ---------------------------------------------------------*/
 #define LAST_IO_FUNCTION_PLATFORM (IO_PLATFORM_DATA_OUT_0+1)  /* table of platform_io[io_al_idx] */
 
 const p_io_function_ctrl platform_io[] =
-{   data_sink     ,     // 0
-    data_in_1     ,     // 1
-    analog_in_0   ,     // 2
-    motion_in_0   ,     // 3
-    audio_in_0    ,     // 4   
-    0             ,     // 5  reserved to the HP processor
-    line_out_0    ,     // 6   
-    gpio_out_0    ,     // 7
-    gpio_out_1    ,     // 8
-    data_out_0    ,     // 9   
+{   
+    data_sink           ,// 0
+    io_data_in_0        ,// 1
+    io_data_in_1        ,// 2
+    io_data_out_0       ,// 3
+    io_data_out_1       ,// 4 
+    io_sensor_in_0      ,// 5   
+    0               , //io_sensor_in_1      ,// 6  
+    0               , //io_sensor_in_2      ,// 7   
+    0               , //io_sensor_in_3      ,// 8 
+    io_timer_0          ,// 9 
+    0               , //io_timer_1          ,// 10  
+    io_ui_in_0          ,// 11
+    0               , //io_ui_in_1          ,// 12
+    0               , //io_ui_in_2          ,// 13
+    0               , //io_ui_in_3          ,// 14
+    io_ui_out_0         ,// 15
+    0               , //io_ui_out_1         ,// 16
+    0               , //io_ui_out_2         ,// 17
+    0               , //io_ui_out_3         ,// 18
+    io_serial_in_0      ,// 19
+    0               , //io_serial_out_0     ,// 20
+    io_analog_in_0      ,// 21
+    0               , //io_analog_out_0     ,// 22
+    io_audio_in_0       ,// 23
+    0               , //io_audio_in_1       ,// 24
+    0               , //io_audio_in_2       ,// 25
+    io_audio_out_0     , // 26
+    0               , //io_audio_out_1      ,// 27
+    0               , //io_audio_out_2      ,// 28
+    0               , //io_audio_out_3      ,// 29
+    io_2d_in_0          ,// 30
+    0               , //io_2d_in_1          ,// 31
+    0               , //io_2d_out_0         ,// 32
+    0               , //io_2d_out_1         ,// 33
 };
-#endif
-
-
-#if PLATFORM_PROCESSOR == 2
-/*  ;-----IO AFFINITY WITH PROCESSOR 2-------------------------------
-    ;Path      Manifest       IO_AL_idx    Comments  (frame size in Bytes)
-    1 io_ra8e1_2d_in_0.txt         5    camera
-*/
-const p_io_function_ctrl platform_io[] =
-{   0 ,                 // 0
-    0 ,                 // 1
-    0 ,                 // 2
-    0 ,                 // 3
-    0 ,                 // 4     
-    sensor_2d_in_0,     // 5
-    0  ,                // 6 
-    0  ,                // 7
-    0  ,                // 8
-    0  ,                // 9 
-};
-#endif
-
 
 
 /*
-    Callback for NODE and scripts (SYSCALL)  system call (0..7) and application callbacks (8..15))
-        and ARC debug activities (ARC_APP_CALLBACK1)
+    Callback for NODE and scripts (SYSCALL) 
+        system call (0..7) 
+        application callbacks (8..15))
+        ARC debug activities (ARC_APP_CALLBACK1)
     Use-case :
         deep-sleep proposal from the scheduler
         event detection trigger, software timers
         metadata sharing from script
-        allow execution of nano_graph_interpreter(STREAM_RESET..) after a graph remote reload (check IOs are ok)
+        allow execution of nano_graph_interpreter(NANOGRAPH_RESET..) after a graph reload
 */
 const p_nanograph_services_t application_callbacks[MAX_NB_APP_CALLBACKS] =
 {   (void*)0,
-    (void*)0,
-    (void*)0,
-    (void*)0,
-    (void*)0,
     (void*)0,
     (void*)0,
     (void*)0
 };
 
 /*==========================================================================================================================*/
-
-extern const uint8_t platform_audio_out_bit_fields[];
-
-
 /*
-    this table will be extended with pointers to nodes loaded
-    dynamically and compiled with position independent execution options
-
-    it is aligned with the list of SOFTWARE COMPONENTS MANIFESTS in "stream_platform\ra8e1\manifest\top_manifest_ra8e1.txt"
+*   the graph to be executed @@@
 */
-/* -----------------------------------
-    Full node descriptions given in ./stream_tools/TEMPLATE_GRAPH.txt
-*/
-
-
-/*
-*   the graph to be executed
-*/
-const uint32_t graph_RA8E1_audio[] =
+const uint32_t graph_platform[] =
 {
-#include "./graphs/graph_ra8_audio_bin.txt"
+    #include "graphs/graph_bin.txt"
 };
 
 
 
 /*
- *  TIME (see stream_time64 definition)
+ *  TIME (see nanograph_time64 definition)
  *
- *  "stream_time64" example of implementation using a global variable
+ *  "nanograph_time64" example of implementation using a global variable
  *  FEDCBA987654321 FEDCBA987654321 FEDCBA987654321 FEDCBA9876543210
  *  ____ssssssssssssssssssssssssssssssssqqqqqqqqqqqqqqqqqqqqqqqqqqqq q32.28 [s]  140 Y + Q28 [s]
  *  systick increment for  1ms =  0x00041893 =  1ms x 2^28
@@ -190,7 +189,7 @@ const uint32_t graph_RA8E1_audio[] =
  * Other implementation rely on an HW timer (RP2040)
 */
 
-uint64_t global_stream_time64;
+uint64_t global_nanograph_time64;
 
 
 /*
@@ -204,25 +203,33 @@ uintptr_t new_node_parameters[(1 + MAX_NB_PENDING_PARAM_UPDATES) * 2] =
 };
 
 
-#define GRAPH_SDS_DEMO_AUDIO 0
+
+/*==========================================================================================================================*/
 
 uint32_t* get_graph_address(uint32_t graph_idx)
 {
-    if (graph_idx == GRAPH_SDS_DEMO_AUDIO)
-    {
-        return (uint32_t*)graph_RA8E1_audio;
-    }
-    return 0;
+    return (uint32_t*)graph_platform;
 }
 
+/*==========================================================================================================================*/
 /**
-  @brief            Shares the platform-specific data for the initialization of the interpreter instance
+  @brief            Shares the pl
+  atform-specific data for the initialization of the interpreter instance
   @param[in/out]    none
   @return           int
  */
 
 void platform_init_specific(NanoGraph_init_t* data)
 {
+    /* flag detecting end of simulations for platforms using files */
+    {   extern uint8_t one_file_is_closed;
+        one_file_is_closed = 0;
+    }
+
+    /* systick simulation */
+    {   extern void SysTickSetup(void);
+        SysTickSetup();
+    }
 #ifdef GRAPH_FROM_PLATFORM
     data->graph = get_graph_address(0);
 #endif
@@ -238,9 +245,10 @@ void platform_init_specific(NanoGraph_init_t* data)
 }
 
 
+/*==========================================================================================================================*/
 /* here: test the need for memory recovery/swap
     does the application modified the memory banks used by the graph ? */
-void arm_memory_swap(nanograph_instance_t* S)
+void memory_swap(nanograph_instance_t* S)
 {
     static int i;
     i = 1;
@@ -249,5 +257,3 @@ void arm_memory_swap(nanograph_instance_t* S)
 }
 
 /*==========================================================================================================================*/
-
-#endif  //#ifndef top_manifest_ra8e1Pc

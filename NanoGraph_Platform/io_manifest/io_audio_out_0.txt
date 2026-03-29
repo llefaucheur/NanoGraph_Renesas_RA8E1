@@ -1,0 +1,13 @@
+; ------------------------------------------------------------------------------------------------------------
+; Manifest of audio output buzzer, class-D, earphone, line-out, ultrasound 
+; ------------------------------------------------------------------------------------------------------------
+                                                                       
+    io_audio_out_0              ; name for the tools                            
+    audio_in                    ; domain name,   unit: dB, Vrms
+    
+    io_set0copy1 0    
+    io_direction_rx0tx1     1   ; TX
+    
+    io_sampling_rate hertz {1 16e3 44.1e3 48000} ; sampling rate options
+
+    end

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------
  * Project:      NanoGraph
- * Title:        platform_computer_io_services.c
+ * Title:        platform_io_services.c
  * Description:  abstraction layer to BSP and streams from the application
  *
  * $Date:        15 February 2023
@@ -43,215 +43,156 @@ FSP_FOOTER
 #endif
 
 /*-----------------------------------------------------------------------*/
+extern uint8_t one_file_is_closed;
 
-#include <stdlib.h>
-#include <string.h>
-
-#include "top_manifest.h"
-
-
-extern void NanoGraph_io_ack (uint8_t HW_io_idx, void *data, uint32_t size);
+extern void NanoGraph_io_ack (uint8_t HW_io_idx, void *data, uintptr_t size);
 
 /*
  * NULL TASK
  */
+extern void NanoGraph_null_task(int32_t c, nanograph_handle_t i, void* d, uint32_t* s);
 void NanoGraph_null_task (int32_t c, nanograph_handle_t i, void *d, uint32_t *s)  {}
 
 
-
-/* Local IO functions */
-extern void data_sink      (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 0   SINK   */
-extern void data_in_1      (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 1   io_ra8e1_data_in_1.txt   */
-extern void analog_in_0    (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 2   io_ra8e1_analog_in_0.txt */
-extern void motion_in_0    (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 3   io_ra8e1_motion_in_0.txt */
-extern void audio_in_0     (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 4   io_ra8e1_audio_in_0.txt  */
-extern void sensor_2d_in_0 (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 5   io_ra8e1_2d_in_0.txt  */
-extern void line_out_0     (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 6   io_ra8e1_line_out_0.txt  */
-extern void gpio_out_0     (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 7   io_ra8e1_gpio_out_0.txt  */
-extern void gpio_out_1     (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 8   io_ra8e1_gpio_out_1.txt  */
-extern void data_out_0     (uint32_t command, nanograph_xdmbuffer_t* data);        /*  IO_AL_idx = 9   io_ra8e1_data_out_0.txt  */
-
-
 /*
- * NULL TASK
+    IO interfaces functions to the possible streams of the platform
  */
-void arm_stream_null_task (int32_t c, nanograph_handle_t i, void *d, uint32_t *s)  {}
+  extern void data_sink           (uint32_t, nanograph_xdmbuffer_t *);  //  0
+  extern void io_data_in_0        (uint32_t, nanograph_xdmbuffer_t *);  //  1
+  extern void io_data_in_1        (uint32_t, nanograph_xdmbuffer_t *);  //  2
+  extern void io_data_out_0       (uint32_t, nanograph_xdmbuffer_t *);  //  3
+  extern void io_data_out_1       (uint32_t, nanograph_xdmbuffer_t *);  //  4
+  extern void io_sensor_in_0      (uint32_t, nanograph_xdmbuffer_t *);  //  5
+//extern void io_sensor_in_1      (uint32_t, nanograph_xdmbuffer_t *);  //  6
+//extern void io_sensor_in_2      (uint32_t, nanograph_xdmbuffer_t *);  //  7
+//extern void io_sensor_in_3      (uint32_t, nanograph_xdmbuffer_t *);  //  8
+  extern void io_timer_0          (uint32_t, nanograph_xdmbuffer_t *);  //  9
+//extern void io_timer_1          (uint32_t, nanograph_xdmbuffer_t *);  // 10
+  extern void io_ui_in_0          (uint32_t, nanograph_xdmbuffer_t *);  // 11
+//extern void io_ui_in_1          (uint32_t, nanograph_xdmbuffer_t *);  // 12
+//extern void io_ui_in_2          (uint32_t, nanograph_xdmbuffer_t *);  // 13
+//extern void io_ui_in_3          (uint32_t, nanograph_xdmbuffer_t *);  // 14
+  extern void io_ui_out_0         (uint32_t, nanograph_xdmbuffer_t *);  // 15
+//extern void io_ui_out_1         (uint32_t, nanograph_xdmbuffer_t *);  // 16
+//extern void io_ui_out_2         (uint32_t, nanograph_xdmbuffer_t *);  // 17
+//extern void io_ui_out_3         (uint32_t, nanograph_xdmbuffer_t *);  // 18
+  extern void io_serial_in_0      (uint32_t, nanograph_xdmbuffer_t *);  // 19
+//extern void io_serial_out_0     (uint32_t, nanograph_xdmbuffer_t *);  // 20
+  extern void io_analog_in_0      (uint32_t, nanograph_xdmbuffer_t *);  // 21
+//extern void io_analog_out_0     (uint32_t, nanograph_xdmbuffer_t *);  // 22
+  extern void io_audio_in_0       (uint32_t, nanograph_xdmbuffer_t *);  // 23
+//extern void io_audio_in_1       (uint32_t, nanograph_xdmbuffer_t *);  // 24
+//extern void io_audio_in_2       (uint32_t, nanograph_xdmbuffer_t *);  // 25
+  extern void io_audio_out_0      (uint32_t, nanograph_xdmbuffer_t *);  // 26
+//extern void io_audio_out_1      (uint32_t, nanograph_xdmbuffer_t *);  // 27
+//extern void io_audio_out_2      (uint32_t, nanograph_xdmbuffer_t *);  // 28
+  extern void io_2d_in_0          (uint32_t, nanograph_xdmbuffer_t *);  // 30
+//extern void io_2d_in_1          (uint32_t, nanograph_xdmbuffer_t *);  // 31
+//extern void io_2d_out_0         (uint32_t, nanograph_xdmbuffer_t *);  // 32
+//extern void io_2d_out_1         (uint32_t, nanograph_xdmbuffer_t *);  // 33
 
 
 /* --------------------------------------------------------------------------------------- 
     FW IO FUNCTIONS
-
-    1 io_ra8e1_analog_0.txt        2    size_sensor_0 16
-    1 io_ra8e1_audio_in_0.txt      4    two microphones    320
-    1 io_ra8e1_line_out_0.txt      6    audio out stereo   160
-    1 io_ra8e1_gpio_out_0.txt      7    detection results  4
-    1 io_ra8e1_gpio_out_1.txt      8    LED/display
-    1 io_ra8e1_data_out_0.txt      9    debug trace        1024
-
-    #define IO_PLATFORM_DATA_IN_0        0
-    #define IO_PLATFORM_DATA_IN_1        1
-    #define IO_PLATFORM_SENSOR_0  2
-    #define IO_PLATFORM_MOTION_IN_0      3
-    #define IO_PLATFORM_AUDIO_IN_0       4
-    #define IO_PLATFORM_2D_IN_0          5
-    #define IO_PLATFORM_LINE_OUT_0       6
-    #define IO_PLATFORM_GPIO_OUT_0       7
-    #define IO_PLATFORM_GPIO_OUT_1       8
-    #define IO_PLATFORM_DATA_OUT_0       9
 */
 
 
+#define size_data_sink 16
+static int16_t buffer_data_sink[size_data_sink / sizeof(int16_t)];
 
-/*  IO_AL_idx =  0 data_in_0 */
-/*  IO_AL_idx =  1 data_in_1 */
+#define size_data_out_0 32
+static int16_t buffer_data_out_0[size_data_out_0 / sizeof(int16_t)];        // 3    general purpose and links to the application ("general" domain)
 
-/*  IO_AL_idx =  2 analog_in_0 */
-#define size_analog_0 16 /* Bytes */
-static int16_t buffer_analog_0[size_analog_0 / sizeof(int16_t)];
-/*  IO_AL_idx =  3 motion_in_0 */
+#define size_sensor_in_0 32
+static int16_t buffer_sensor_in_0[size_sensor_in_0 / sizeof(int16_t)];      // 5    motion, temperature, proximity, CO2, PIR ("motion" or "analog_in" or "gpio" domains)
 
-/*  IO_AL_idx =  4 audio_in_0  buffer declared in the application */
-#define size_audio_in_0 640 
+#define size_timer_0 4
+static int16_t buffer_timer_0[size_timer_0 / sizeof(int32_t)];              // 9    timer at 100ms, 1s ("timer" domain)
 
-/*  IO_AL_idx =  5 sensor_2d_in_0 */
+#define size_ui_in_0 4
+static int16_t buffer_ui_in_0[size_ui_in_0 / sizeof(int32_t)];              // 11   buttons, slider ("user_interface" domain)
 
-/*  IO_AL_idx =  6 line_out_0 */
-#define size_line_out_0 320
-static int16_t buffer_line_out_0[size_line_out_0 / sizeof(int16_t)];
+#define size_io_ui_out_0 96                                                 // 15   LED, LCD, Digits, Metadata ("user_interface" domain)
+static uint32_t buffer_io_ui_out_0[size_io_ui_out_0 / sizeof(int32_t)];     
 
-/*  IO_AL_idx =  7  gpio_out_0 */
-#define size_gpio_out_0 4                      
-static uint32_t buffer_gpio_out_0[size_gpio_out_0];
+#define size_analog_in_0 96                                                 // 21   analog A/D input ("motion" or "analog_in" or "gpio" domain)
+static uint32_t buffer_analog_in_0[size_analog_in_0 / sizeof(int32_t)];       
 
-/*  IO_AL_idx =  8  gpio_out_1  UI/LED  */
-#define size_gpio_out_1 4
-static int32_t buffer_gpio_out_1[size_gpio_out_1 / sizeof(int32_t)];
+#define size_audio_in_0 96                                                  // 23   microphone, PDM, line-in, modem, USB audio ("audio_in" domain)
+static uint32_t buffer_audio_in_0[size_audio_in_0 / sizeof(int32_t)];       
 
-/*  IO_AL_idx =  9  data_out_0  debug traces  */
-#define size_data_out_0 4                      
-static uint32_t buffer_data_out_0[size_data_out_0];    
+#define size_2d_in_0 96                                                     // 30   camera ("2d_in" domain)
+static uint32_t buffer_2d_in_0[size_2d_in_0 / sizeof(int32_t)];     
 
 
 
-
-/*  IO_AL_idx = 0   */
+/*
+ * ---------------------IO_AL_idx = 0-----------------------------------
+ */
 void data_sink(uint32_t command, nanograph_xdmbuffer_t* data)
 {   
 }
+/*
+ * ---------------------IO_AL_idx = 1-----------------------------------
+ */
 
-/*  IO_AL_idx = 1   */
-void data_in_1(uint32_t command, nanograph_xdmbuffer_t* data)
-{   switch (command)
-    {   case NANOGRAPH_RESET:
+void io_data_in_0(uint32_t command, nanograph_xdmbuffer_t* data)
+{
+    }
+
+/*
+ * ---------------------IO_AL_idx = 2-----------------------------------
+ */
+
+void io_data_in_1(uint32_t command, nanograph_xdmbuffer_t* data)
+{
+}
+
+
+
+/*
+ * ---------------------IO_AL_idx = 3-----------------------------------
+ */
+
+void io_data_out_0(uint32_t command, nanograph_xdmbuffer_t* data)
+{
+}
+
+/*
+ * ---------------------IO_AL_idx = 4-----------------------------------
+ */
+
+void io_data_out_1(uint32_t command, nanograph_xdmbuffer_t* data)
+    {
+}
+
+/*
+ * ---------------------IO_AL_idx = 5-----------------------------------
+ */
+
+void io_sensor_in_0 (uint32_t command, nanograph_xdmbuffer_t *data)             //  motion, temperature, proximity, CO2, PIR ("motion" or "analog_in" or "gpio" domains)
+{   int32_t tmp, nanograph_format_io_setting;
+
+#define IO_SENSOR_IN_0_SIZE 8
+    int16_t local_buffer[IO_SENSOR_IN_0_SIZE];
+
+    switch (command)
+    {
+    case NANOGRAPH_RESET:
+        nanograph_format_io_setting = *(uint32_t *)(data->address);          
+        break;
+        
         case NANOGRAPH_SET_PARAMETER:
+        break;
         case NANOGRAPH_SET_BUFFER:
+        break;
+        
         case NANOGRAPH_RUN:
+        //NanoGraph_io_ack (IO_PLATFORM_SENSOR_IN_0, local_buffer, IO_SENSOR_IN_0_SIZE * sizeof(int16_t));
+        break;
+
         case NANOGRAPH_STOP:
-        case NANOGRAPH_READ_PARAMETER:
-        default:break;
-    }
-}
-
-
-/*  IO_AL_idx = 2       1 io_ra8e1_analog_0.txt 2    size_sensor_0 16 */
-void analog_in_0(uint32_t command, nanograph_xdmbuffer_t* data)
-{   switch (command)
-    {
-    case NANOGRAPH_RESET:
-        //nanograph_format_io_setting = *(uint32_t *)(data->address);
-        break;
-    case NANOGRAPH_SET_PARAMETER:  /* presets reloaded */
-        break;
-    case NANOGRAPH_SET_BUFFER:     /* if memory allocation is made in the graph */
-        break;
-    case NANOGRAPH_RUN:            /* data moves */
-        NanoGraph_io_ack(IO_PLATFORM_SENSOR_0, buffer_analog_0, size_analog_0);
-        break;
-    case NANOGRAPH_STOP:           /* stop data moves */
-        break;
-    case NANOGRAPH_READ_PARAMETER: /* setting done ? device is ready ? calibrated ? */
-        break;
-    default:
-        break;
-    }
-}
-
-
-
-/*  IO_AL_idx = 3   */
-void motion_in_0(uint32_t command, nanograph_xdmbuffer_t* data)
-{   switch (command)
-    {   case NANOGRAPH_RESET:
-        case NANOGRAPH_SET_PARAMETER:
-        case NANOGRAPH_SET_BUFFER:
-        case NANOGRAPH_RUN:
-        case NANOGRAPH_STOP:
-        case NANOGRAPH_READ_PARAMETER:
-        default:break;
-    }
-}
-
-
-/*  IO_AL_idx = 4       1 io_ra8e1_audio_in_0.txt      4    two microphones    320  */
-void audio_in_0(uint32_t command, nanograph_xdmbuffer_t* data)
-{
-    switch (command)
-    {
-    case NANOGRAPH_RESET:
-        //nanograph_format_io_setting = *(uint32_t *)(data->address);
-        break;
-    case NANOGRAPH_SET_PARAMETER:  /* presets reloaded */
-        break;
-    case NANOGRAPH_SET_BUFFER:     /* if memory allocation is made in the graph */
-        break;
-    case NANOGRAPH_RUN:            /* data moves */
-        break;
-    case NANOGRAPH_STOP:           /* stop data moves */
-        break;
-    case NANOGRAPH_READ_PARAMETER: /* setting done ? device is ready ? calibrated ? */
-        break;
-    default:
-        break;
-    }
-}
-
-
-/*  IO_AL_idx = 5   */
-void sensor_2d_in_0(uint32_t command, nanograph_xdmbuffer_t* data)
-{
-    switch (command)
-    {
-    case NANOGRAPH_RESET:
-    case NANOGRAPH_SET_PARAMETER:
-    case NANOGRAPH_SET_BUFFER:
-    case NANOGRAPH_RUN:
-    case NANOGRAPH_STOP:
-    case NANOGRAPH_READ_PARAMETER:
-    default:break;
-    }
-}
-
-
-
-
-/*  IO_AL_idx = 6      1 io_ra8e1_line_out_0.txt      6    audio out stereo   160  */
-void line_out_0 (uint32_t command, nanograph_xdmbuffer_t *data)
-{
-    switch (command)
-    {
-    case NANOGRAPH_RESET:
-        //stream_format_io_setting = *(uint32_t *)(data->address);
-        break;        
-    case NANOGRAPH_SET_PARAMETER:  /* presets reloaded */
-        break;
-    case NANOGRAPH_SET_BUFFER:     /* if memory allocation is made in the graph */
-        break;
-    case NANOGRAPH_RUN:            /* data moves */
-        NanoGraph_io_ack(IO_PLATFORM_LINE_OUT_0, buffer_line_out_0, size_line_out_0);
-        break;
-    case NANOGRAPH_STOP:           /* stop data moves */
-        break;
-    case NANOGRAPH_READ_PARAMETER: /* setting done ? device is ready ? calibrated ? */
+        one_file_is_closed = 1;
         break;
     default:
         break;      
@@ -259,39 +200,35 @@ void line_out_0 (uint32_t command, nanograph_xdmbuffer_t *data)
 }
 
 
-/*  IO_AL_idx = 7   */
-void gpio_out_0(uint32_t command, nanograph_xdmbuffer_t* data)
-{
-    switch (command)
+/*
+ * ---------------------IO_AL_idx = 9-----------------------------------
+ */
+void io_timer_0 (uint32_t command, nanograph_xdmbuffer_t* data)              // timer at 100ms, 1s ("timer" domain)
     {
-    case NANOGRAPH_RESET:
-    case NANOGRAPH_SET_PARAMETER:
-    case NANOGRAPH_SET_BUFFER:
-    case NANOGRAPH_RUN:
-    case NANOGRAPH_STOP:
-    case NANOGRAPH_READ_PARAMETER:
-    default:break;
     }
+
+/*
+ * ---------------------IO_AL_idx = 11-----------------------------------
+ */
+void io_ui_in_0 (uint32_t command, nanograph_xdmbuffer_t* data)              // buttons, slider ("user_interface" domain)
+{
 }
 
+/*
+ * ---------------------IO_AL_idx = 15-----------------------------------
+ */
 
-/*  IO_AL_idx = 8  UI/LED  */
-void gpio_out_1(uint32_t command, nanograph_xdmbuffer_t* data)
+void io_ui_out_0(uint32_t command, nanograph_xdmbuffer_t* data)             // LED, LCD, Digits, Metadata ("user_interface" domain)
 {
+    nanograph_xdmbuffer_t* pt_pt;
+
     switch (command)
     {
     case NANOGRAPH_RESET:
         break;
     case NANOGRAPH_SET_PARAMETER:
-        //stream_format_io_setting = *(uint32_t *)(data->address);          
         break;
     case NANOGRAPH_SET_BUFFER:
-    {
-        nanograph_xdmbuffer_t* pt_pt;
-        pt_pt = (nanograph_xdmbuffer_t*)data;
-        pt_pt->address = (intptr_t)buffer_gpio_out_1;
-        pt_pt->size = size_gpio_out_1;
-    }
     break;
     case NANOGRAPH_RUN:
     {	extern void hal_set_led0_low(void);
@@ -299,8 +236,9 @@ void gpio_out_1(uint32_t command, nanograph_xdmbuffer_t* data)
 
     	nanograph_xdmbuffer_t* pt_pt = (nanograph_xdmbuffer_t*)data;
 
-        /* "io_platform_stream_in_0," frame_size option in samples + FORMAT-0 in the example graph */
-        NanoGraph_io_ack(IO_PLATFORM_GPIO_OUT_1, (void *)(pt_pt->address), pt_pt->size);
+        /* "io_platform_nanograph_in_1," frame_size option in samples + FORMAT-0 in the example graph */
+        pt_pt = (nanograph_xdmbuffer_t*)data;
+        NanoGraph_io_ack (IO_PLATFORM_UI_OUT_0, (uint8_t *)pt_pt->address, pt_pt->size);
 
         if (*(uint32_t*)pt_pt->address == 0)
         {   hal_set_led0_low();
@@ -308,11 +246,10 @@ void gpio_out_1(uint32_t command, nanograph_xdmbuffer_t* data)
         else
         {	hal_set_led0_high();
         }
-
-        *(uint32_t*)pt_pt->address = 0;
         break;
     }
     case NANOGRAPH_STOP:
+        one_file_is_closed = 1;
         break;
     case NANOGRAPH_READ_PARAMETER: /* setting done ? device is ready ? calibrated ? */
         break;
@@ -321,33 +258,51 @@ void gpio_out_1(uint32_t command, nanograph_xdmbuffer_t* data)
     }
 }
 
-
-/*  IO_AL_idx = 9       1 io_ra8e1_data_out_0.txt         9    debug trace        1024  */
-void data_out_0(uint32_t command, nanograph_xdmbuffer_t* data)
+/*
+ * ---------------------IO_AL_idx = 19-----------------------------------
+ */
+void io_serial_in_0(uint32_t command, nanograph_xdmbuffer_t* data)      // communication RX for debug and remote control ("general" domain)
 {
+}
+
+
+/*
+ * ---------------------IO_AL_idx = 21-----------------------------------
+ */
+
+void io_analog_in_0(uint32_t command, nanograph_xdmbuffer_t* data)      // analog A/D input ("motion" or "analog_in" or "gpio" domain)
+{
+}
+
+
+/*
+ * ---------------------IO_AL_idx = 23-----------------------------------
+ */
+
+void io_audio_in_0 (uint32_t command, nanograph_xdmbuffer_t *data)      // microphone, PDM, line-in, modem, USB audio ("audio_in" domain)
+{   int32_t tmp, nanograph_format_io_setting;
+    nanograph_xdmbuffer_t* pt_pt;
+
     switch (command)
     {
     case NANOGRAPH_RESET:
-        //stream_format_io_setting = *(uint32_t *)(data->address);          
+        nanograph_format_io_setting = *(uint32_t *)(data->address);
         break;
     case NANOGRAPH_SET_PARAMETER:
         break;
     case NANOGRAPH_SET_BUFFER:
-    {
-        nanograph_xdmbuffer_t* pt_pt;
-        pt_pt = (nanograph_xdmbuffer_t*)data;
-        pt_pt->address = (intptr_t)buffer_data_out_0;
-        pt_pt->size = size_data_out_0;
+        {   pt_pt = (nanograph_xdmbuffer_t *)data;
+            pt_pt->address = (intptr_t)buffer_audio_in_0;
+            pt_pt->size = size_audio_in_0;
     }
     break;
     case NANOGRAPH_RUN:
-        /* "io_platform_stream_in_0," frame_size option in samples + FORMAT-0 in the example graph */
-        NanoGraph_io_ack(IO_PLATFORM_DATA_OUT_0, (uint8_t*)data, size_data_out_0);
+        pt_pt = (nanograph_xdmbuffer_t*)data;
+        NanoGraph_io_ack (IO_PLATFORM_AUDIO_IN_0, buffer_audio_in_0, pt_pt->size);
 
         break;
     case NANOGRAPH_STOP:
-        break;
-    case NANOGRAPH_READ_PARAMETER: /* setting done ? device is ready ? calibrated ? */
+        one_file_is_closed = 1;
         break;
     default:
         break;
@@ -356,5 +311,17 @@ void data_out_0(uint32_t command, nanograph_xdmbuffer_t* data)
 
 
 /*
- * -----------------------------------------------------------------------
+ * ---------------------IO_AL_idx = 26-----------------------------------
  */
+
+void io_audio_out_0(uint32_t command, nanograph_xdmbuffer_t* data)           // buzzer, class-D, earphone, line-out, ultrasound
+{
+}
+
+/*
+ * ---------------------IO_AL_idx = 30-----------------------------------
+ */
+
+void io_2d_in_0(uint32_t command, nanograph_xdmbuffer_t* data) 
+{
+}

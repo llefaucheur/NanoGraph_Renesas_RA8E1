@@ -1,0 +1,13 @@
+; ------------------------------------------------------------------------------------------------------------
+; Manifest of buttons, slider ("user_interface" domain)
+; ------------------------------------------------------------------------------------------------------------
+                                                                       
+    io_ui_out_0              ; name for the tools                            
+    user_interface
+    
+    io_direction_rx0tx1     1    
+    io_set0copy1 1
+    io_commander0_servant1  1                       ; samples are read/interpreted by the scheduler on each loop
+    
+    
+    end

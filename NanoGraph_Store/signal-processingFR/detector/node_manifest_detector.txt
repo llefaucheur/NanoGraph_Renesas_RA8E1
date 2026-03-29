@@ -1,9 +1,9 @@
 ; ------------------------------------------------------------------------------------------------------------
-; SOFTWARE COMPONENT MANIFEST - "sigp_stream_detector"
+; SOFTWARE COMPONENT MANIFEST - "sigp_detector"
 ; ------------------------------------------------------------------------------------------------------------
 ;
 node_developer_name      signal-processing.fr   ; developer name
-node_name                sigp_stream_detector   ; node name
+node_name                sigp_detector          ; node name
 
 ;----------------------------------------------------------------------------------------
 ;   MEMORY ALLOCATIONS

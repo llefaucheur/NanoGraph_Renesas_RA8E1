@@ -128,6 +128,7 @@ static void script_processing(uint32_t script_index, uint32_t parameter)
     if (script_index == 0) return;
 
     // TODO @@@@
+    // set "entry_param" selection with "parameter"
     if (script_index == parameter)
         parameter = parameter;
 }
@@ -236,13 +237,15 @@ static void set_alignment_bit (nanograph_instance_t *S, uint32_t *arc)
 
     /* the consumer reset this bit after data realignment */
     if (fifosize < producer_frame_size + write)
-    {   SET_BIT(arc[WR_ARCW3], ALIGNBLCK_ARCW3_LSB);
+        {
+            SET_BIT(arc[WR_ARCW3], ALIGNBLCK_ARCW3_LSB);
     }
     else
     {   
         /* the realignment bit was set, clear it and notify the producer */
         if (arc[WR_ARCW3] & (1 << ALIGNBLCK_ARCW3_LSB))
-        {   CLEAR_BIT(arc[WR_ARCW3], ALIGNBLCK_ARCW3_LSB);
+            {
+                CLEAR_BIT(arc[WR_ARCW3], ALIGNBLCK_ARCW3_LSB);
         }
     }
 }
@@ -278,10 +281,12 @@ static uint8_t arc_ready_for_write(nanograph_instance_t *S, uint32_t *arc, uintp
     *free_for_writes =  (uint32_t)(fifosize - write); /* memory available for writes */
 
     if (write + producer_frame_size > fifosize)
-    {   ret = 0;
+        {
+            ret = 0;
     }
     else
-    {   ret = 1;
+        {
+            ret = 1;
     }
 
     return ret;
@@ -318,10 +323,12 @@ static uint8_t arc_ready_for_read(nanograph_instance_t *S, uint32_t *arc, uintpt
     *frame_size = (uint32_t)(write - read);     /* size of data ready for read */
 
     if (*frame_size >= consumer_frame_size)
-    {   ret = 1;
+        {
+            ret = 1;
     }
     else
-    {   ret = 0;
+        {
+            ret = 0;
     }
 
     return ret;
@@ -369,7 +376,8 @@ static void arc_data_operations (
     case arc_data_realignment_to_base:
         read = RD(arc[RD_ARCW2], READ_ARCW2);
         if (read == 0u)
-        {   break;      /* buffer is full there is nothing to realign */
+            {
+                break;      /* buffer is full there is nothing to realign */
         }
         write = RD(arc[WR_ARCW3], WRITE_ARCW3);
         size = U(write - read);
@@ -389,10 +397,12 @@ static void arc_data_operations (
         read = RD(arc[RD_ARCW2], READ_ARCW2);
         src = base + read;
         dst = buffer;
-        {   uint32_t loop;
+            {
+                uint32_t loop;
             uint8_t x;
             for (loop = 0; loop < datasize; loop++, dst++, src++)
-            {   x = *dst; *dst = *src; *src = x;
+                {
+                    x = *dst; *dst = *src; *src = x;
             }
         }
         break;
@@ -443,7 +453,8 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
   
     /* if this is a call to a script : XDM is bytes code + Nanograph instance + dummy arc */
     if (NanoGraph_script_index == RD(S->node_header[0], NODE_IDX_LW0))
-    {   uint32_t* buffer;
+        {
+            uint32_t* buffer;
 
         arcpt =  &(S->all_arcs[SIZEOF_ARCDESC_W32 * (ARC_RX0TX1_CLEAR & (uint32_t)(S->arcID[0]))]);
         buffer = (uint32_t *)arc_extract_info_pt(S, arcpt, arc_read_address);
@@ -520,11 +531,13 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
         #endif  
         /* ---------------  OUTPUT ARC -------------------------------------------------*/
         if (ARC_RX0TX1_TEST & arcID)
-        {   if (0u == pre0post1)
+            {
+                if (0u == pre0post1)
             {
                 /* invalidate/reload the cache for buffers used with DMA and multiprocessing */
                 if (MPFLUSH_CTRL0 == RD(arcpt[BASE_ARCW0], MPFLUSH_ARCW0))
-                {   uint32_t* DCache;
+                    {
+                        uint32_t* DCache;
 
                     DCache = &(arcpt[WR_ARCW3]);        /* case "B" */
                     INVALIDATE_BUFFER_1LINE(DCache);    /* reload the cache for the Write words of the output arc */
@@ -535,11 +548,13 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
 
                 arc_ready = arc_ready_for_write(S, arcpt, (uintptr_t *)&tmp);
                 if (arc_ready != 0 && hqos != 0)    /* if high QoS arc with data     */
-                {   ret = 1;                        /* then force a call to the node */
+                    {
+                        ret = 1;                        /* then force a call to the node */
                     break;
                 } 
                 else
-                {   ret = ret & arc_ready;  /* else consolidate decision on all arcs */
+                    {
+                        ret = ret & arc_ready;  /* else consolidate decision on all arcs */
                 }
 
                 xdm_data[iarc].address = (intptr_t)(arc_extract_info_pt (S, arcpt, arc_write_address));
@@ -556,7 +571,8 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
 
                 /* invalidate/reload the cache for buffers used with DMA and multiprocessing */
                 if (MPFLUSH_CTRL0 == RD(arcpt[BASE_ARCW0], MPFLUSH_ARCW0))
-                {   uint32_t* DCache;
+                    {
+                        uint32_t* DCache;
                     DCache = &(arcpt[WR_ARCW3]);    /* case "C" */
                     // CLEAN_BUFFER_1LINE(DCache);     /* flush the cache for the Write words of the output arc */
 
@@ -571,7 +587,8 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
             if (0u == pre0post1)
             {   /* preprocessing : reload the R and W index */
                 if (MPFLUSH_CTRL0 == RD(arcpt[BASE_ARCW0], MPFLUSH_ARCW0))
-                {   uint32_t* DCache;
+                    {
+                        uint32_t* DCache;
                     DCache = &(arcpt[RD_ARCW2]);      /* case "A" 1 */
                     //INVALIDATE_BUFFER_1LINE(DCache);
 
@@ -584,11 +601,13 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
 
                 arc_ready = arc_ready_for_read(S, arcpt, (uintptr_t *)&tmp);
                 if (arc_ready != 0 && hqos != 0)    /* if high QoS arc with data     */
-                {   ret = 1;                        /* then force a call to the node */
+                    {
+                        ret = 1;                        /* then force a call to the node */
                     break;
                 }
                 else
-                {   ret = ret & arc_ready;  /* else consolidate decision of all arcs */
+                    {
+                        ret = ret & arc_ready;  /* else consolidate decision of all arcs */
                 }
 
                 /* if the NODE generating the input data was blocked (ALIGNBLCK_ARCW3=1)
@@ -596,7 +615,8 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
                     data, and clear the flag.
                 */
                 if (TEST_BIT(arcpt[WR_ARCW3], ALIGNBLCK_ARCW3_LSB))
-                {   arc_data_operations(S, arcpt, arc_data_realignment_to_base, 0, 0);
+                    {
+                        arc_data_operations(S, arcpt, arc_data_realignment_to_base, 0, 0);
                 }
 
                 xdm_data[iarc].address = (intptr_t)(arc_extract_info_pt(S, arcpt, arc_read_address));
@@ -606,7 +626,8 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
             {   /* postprocessing : flush the R and W index */
                 uint32_t producer_frame_size, fmt;
                 if (0 != RD(arcpt[BASE_ARCW0], MPFLUSH_ARCW0))
-                {   uint32_t* DCache;
+                    {
+                        uint32_t* DCache;
                     DCache = &(arcpt[WR_ARCW3]);
                     // CLEAN_BUFFER_1LINE(DCache);
                     //DATA_MEMORY_BARRIER
@@ -622,12 +643,14 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
                 fmt = RD(arcpt[FMT_ARCW4],PRODUCFMT_ARCW4) * NANOGRAPH_FORMAT_SIZE_W32;
                 producer_frame_size = RD(S->all_formats[fmt], FRAMESIZE_FMT0);
                 if (write > U(fifosize - producer_frame_size))
-                {   arc_data_operations (S, arcpt, arc_data_realignment_to_base, 0, 0);
+                    {
+                        arc_data_operations(S, arcpt, arc_data_realignment_to_base, 0, 0);
                 }
 
                 /* flush the cache and the memory barriers for buffers used with DMA and multiprocessing */
                 if (MPFLUSH_CTRL0 == RD(arcpt[BASE_ARCW0], MPFLUSH_ARCW0))
-                {   uint32_t* DCache;
+                    {
+                        uint32_t* DCache;
                     /* flush input  arcs R */
                     DCache = &(arcpt[RD_ARCW2]);
                     // CLEAN_BUFFER_1LINE(DCache);         /* case "D" */
@@ -639,7 +662,8 @@ static uint8_t arc_index_update (nanograph_instance_t *S, nanograph_xdmbuffer_t 
     }
 
     if ((0u == pre0post1) && (0u == ret))
-    {   return (ret);     /* arcs are not ready, stop execution */
+        {
+            return (ret);     /* arcs are not ready, stop execution */
     }
 
 
@@ -687,7 +711,8 @@ void load_clear_memory_segments (nanograph_instance_t *S, uint8_t pre0post1)
 
         /* swap memory with the arc buffer "SWAPBUFID" */ 
         if (TEST_BIT(memReqWord2, SWAP_LW2S0_LSB))
-        {   uint16_t arcID;
+            {
+                uint16_t arcID;
             uint32_t *arc;
 
             arcID = RD(memReqWord2, SWAPBUFID_LW2S);
@@ -699,14 +724,16 @@ void load_clear_memory_segments (nanograph_instance_t *S, uint8_t pre0post1)
 
         /* clear memory if (static and reset) | working */
         if (TEST_BIT(memReqWord2, CLEAR_LW2S0_LSB))
-        {   uint8_t clear_mem;
+            {
+                uint8_t clear_mem;
 
             clear_mem = (0 == TEST_BIT(memReqWord2, WORK_LW2S0_LSB));           // is it static ?
             clear_mem &= (NANOGRAPH_RESET == RD(S->pack_command, COMMAND_CMD));    // and reset
             clear_mem |= TEST_BIT(memReqWord2, WORK_LW2S0_LSB);                 // or working
 
             if (clear_mem)
-            {   packsize2lin(&memlen, memreq[NBW32_MEMREQ_LW2 * imem + SIZE_LW2]);
+                {
+                    packsize2lin(&memlen, memreq[NBW32_MEMREQ_LW2 * imem + SIZE_LW2]);
                 MEMSET(lw2s, 0, memlen);
             }
         }
@@ -755,19 +782,22 @@ static void check_graph_boundaries(nanograph_instance_t *S)
         /* check this interpreter instance is allowed to use this IO */
         read_hwio_control = (S->pio_hw)[RD(*pio_control, FWIOIDX_IOFMT0) * TRANSLATE_PLATFORM_HWIO_AL_IDX_SIZE_W32];
         if (RD(S->scheduler_control, INST_IDX_SCTRL) != RD(read_hwio_control, INST_IDX_HWIO_CONTROL))
-        {   continue;
+            {
+                continue;
         }
 
         /* is it an IO dedicated to this processor ? */
         if (0u == U(S->iomask & ((const uint64_t)1 << graph_io_idx)))
-        {   continue;
+            {
+                continue;
         }
 
         /* is it a servant/asynchronous IO ? 
-           “commander” when it initiates data exchanges with the graph without control from the scheduler, for example an audio codec.
-           “servant” when the scheduler must asynchronously pull or push data by calling abstraction */
+               ?commander? when it initiates data exchanges with the graph without control from the scheduler, for example an audio codec.
+               ?servant? when the scheduler must asynchronously pull or push data by calling abstraction */
         if (IO_IS_COMMANDER0 == TEST_BIT(*pio_control, SERVANT1_IOFMT0_LSB))
-        {   continue;
+            {
+                continue;
         }
 
         arc_idx = (uint8_t)(ARC_RX0TX1_CLEAR & RD(*pio_control, IOARCID_IOFMT0));
@@ -777,7 +807,8 @@ static void check_graph_boundaries(nanograph_instance_t *S)
         ongoing_idx = graph_io_idx / 8;
         ongoing_mask = 1 << (graph_io_idx - ongoing_idx * 8);
         if (ongoing_mask & S->ongoing_async_IO[ongoing_idx] )
-        {   continue;
+            {
+                continue;
         }
 
         // TODO
@@ -794,21 +825,25 @@ static void check_graph_boundaries(nanograph_instance_t *S)
             need_data_move = arc_ready_for_write(S, arcpt, &size);
             buffer = arc_extract_info_pt(S, arcpt, arc_write_address);
             if (size == 0u) /* size free for writes = 0 ? */
-            {   continue;   /* look next IO */
+                {
+                    continue;   /* look next IO */
             }
         }
 
         /* if this is an output stream : check the buffer has data (size = W-R) >= 1 consumer frame size */
         else
-        {   need_data_move = arc_ready_for_read(S, arcpt, &size);
+            {
+                need_data_move = arc_ready_for_read(S, arcpt, &size);
             buffer = arc_extract_info_pt(S, arcpt, arc_read_address);
             if (size == 0u)     /* size free for read = 0 ? */
-            {   continue;       /* look next IO */
+                {
+                    continue;       /* look next IO */
             }
         }
         
         if (need_data_move)
-        {   nanograph_xdmbuffer_t pt_pt;
+            {
+                nanograph_xdmbuffer_t pt_pt;
 
             S->ongoing_async_IO[ongoing_idx] |= ongoing_mask;
             
@@ -817,7 +852,8 @@ static void check_graph_boundaries(nanograph_instance_t *S)
 
             /* the main application do not give control to data requests skip this IO */
             if (*io_func == 0u)
-            {   continue;
+                {
+                    continue;
             }
 
             /* io_func : data move + io_stream notification 
@@ -847,15 +883,18 @@ static uint32_t check_hwsw_compatibility(nanograph_instance_t *S)
     uint32_t header = (S->node_header)[0];
 
     if (RD(header, ARCHID_LW0) > 0u) /* do we care about the architecture ID ? */
-    {   match = (uint8_t)(RD(header, ARCHID_LW0) == RD(whoami, ARCHID_LW0));
+        {
+            match = (uint8_t)(RD(header, ARCHID_LW0) == RD(whoami, ARCHID_LW0));
     }
 
     if (RD(header, PROCID_LW0) > 0u) /* do we care about the processor ID ? */
-    {   match = match & (RD(header, PROCID_LW0) == RD(whoami, PROCID_LW0));
+        {
+            match = match & (RD(header, PROCID_LW0) == RD(whoami, PROCID_LW0));
     }
 
     if (RD(header, PRIORITY_LW0) > 0u) /* do we care about the priority ? */
-    {   match = match & (RD(header, PRIORITY_LW0) == RD(whoami, PRIORITY_LW0));
+        {
+            match = match & (RD(header, PRIORITY_LW0) == RD(whoami, PRIORITY_LW0));
     }
 
     return match;
@@ -889,15 +928,16 @@ void nanograph_interpreter_process (nanograph_instance_t *S, int8_t command, uin
         parameters are in the global list (in RAM) of [node idx; parameter address]..[0;0] 
     */
     if (command == NANOGRAPH_SET_PARAMETER)
-    {   uint32_t *backup_linked_list_ptr;
-        uint8_t *pt8;
-        backup_linked_list_ptr = S->linked_list_ptr;            // save position of the scheduler
-        S->linked_list_ptr = &((S->linked_list)[data]);         // point to the node to update
-        read_header(S);                                         // read the header of the node to update
-        pt8 = S->pt8b_collision_arc + COLL2NEWPARAM_BYTES;      // point to the W32 holding the "new param!" flag
-        *pt8 |= (1 << NEW_PARAM_ARCW1_BIT_LSB);                 // notify the arrival of new parameters
-        S->linked_list_ptr = backup_linked_list_ptr;            // restore original position of the scheduler
-        return;
+    {   
+        //uint32_t *backup_linked_list_ptr;
+        //uint8_t *pt8;
+        //backup_linked_list_ptr = S->linked_list_ptr;            // save position of the scheduler
+        //S->linked_list_ptr = &((S->linked_list)[data]);         // point to the node to update
+        //read_header(S);                                         // read the header of the node to update
+        //pt8 = S->pt8b_collision_arc + COLL2NEWPARAM_BYTES;      // point to the W32 holding the "new param!" flag
+        //*pt8 |= (1 << NEW_PARAM_ARCW1_BIT_LSB);                 // notify the arrival of new parameters
+        //S->linked_list_ptr = backup_linked_list_ptr;            // restore original position of the scheduler
+        //return;
     }
 
 
@@ -923,32 +963,38 @@ void nanograph_interpreter_process (nanograph_instance_t *S, int8_t command, uin
             
             /* check the boundaries of the graph, not during end/stop periods */
             if (command == NANOGRAPH_RUN) 
-            {   check_graph_boundaries(S); 
+                {
+                    check_graph_boundaries(S);
             }
          
             /* read all the information about the Node and check it is not locked */
             if (read_header(S))
-            {   continue;
+                {
+                    continue;
             }
 
             /* does the NODE is executable on this processor */
             if (0U == check_hwsw_compatibility(S))
-            {   continue;
+                {
+                    continue;
             }
 
             /* does an other process/processor is trying to execute the same Node ? */
             if (0u == lock_this_component (S))
-            {   continue;
+                {
+                    continue;
             }
 
             /* check input arc has enough data and output arc is free, then run */
             if (command == NANOGRAPH_RUN)
-            {   run_node(S);
+                {
+                    run_node(S);
             }
 
             /* ---------------- parameter was changed, or reset phase ? -------------------- */
             if (command == NANOGRAPH_RESET)
-            {   reset_component (S);
+                {
+                    reset_component(S);
 
                 /* read the parameter */
                 set_reset_parameters (S, &((S->node_header)[S->node_parameters_offset]));
@@ -957,7 +1003,8 @@ void nanograph_interpreter_process (nanograph_instance_t *S, int8_t command, uin
 
             /* end of graph processing ? */
             if (command == NANOGRAPH_STOP)
-            {   uint32_t returned;
+                {
+                    uint32_t returned;
                 ST(S->pack_command, COMMAND_CMD, NANOGRAPH_STOP);
                 nanograph_calls_node (S, S->node_instance_addr, 0u, &returned);
             }
@@ -968,14 +1015,16 @@ void nanograph_interpreter_process (nanograph_instance_t *S, int8_t command, uin
             unlock_this_component(S);
 
             if (return_option == NANOGRAPH_SCHD_RET_END_EACH_NODE)
-            {   break;
+                {
+                    break;
             }
 
 	    }  while (0u == TEST_BIT(S->scheduler_control, ENDLLIST_SCTRL_LSB));
 
         if ((return_option == NANOGRAPH_SCHD_RET_END_ALL_PARSED) || 
             (return_option == NANOGRAPH_SCHD_RET_END_EACH_NODE))
-        {  break;
+            {
+                break;
         }
 
         //if (script_option & NANOGRAPH_SCHD_SCRIPT_END_PARSING) {script_processing (S->main_script, 0); }
@@ -1020,8 +1069,10 @@ static uint8_t read_header (nanograph_instance_t *S)
         S->arcID[iarc+1u]= (uint16_t)(((S->node_header)[ARCOFF +iarc/2]) >> 16);
 
         if (TX_found == 0)
-        {   if (ARC_RX0TX1_TEST & S->arcID[iarc])
-            {   TX_found = 1;
+        {
+            if (ARC_RX0TX1_TEST & S->arcID[iarc])
+            {
+                TX_found = 1;
                 /* the base arc holds the byte pointer for locking the node */
                 x = SIZE_ARCW1 + SIZEOF_ARCDESC_W32 * (ARC_RX0TX1_CLEAR & S->arcID[iarc]);
                 S->pt8b_collision_arc = (uint8_t *)&(S->all_arcs[x]); /* point to the LSB of the 3rd word of arc descriptor */
@@ -1029,8 +1080,10 @@ static uint8_t read_header (nanograph_instance_t *S)
             }
         }
         if (TX_found == 0)
-        {   if (ARC_RX0TX1_TEST & S->arcID[iarc+1u])
-            {   TX_found = 1;
+        {
+            if (ARC_RX0TX1_TEST & S->arcID[iarc + 1u])
+            {
+                TX_found = 1;
                 /* the base arc holds the byte pointer for locking the node */
                 x = SIZE_ARCW1 + SIZEOF_ARCDESC_W32 * (ARC_RX0TX1_CLEAR & S->arcID[iarc +1]);
                 S->pt8b_collision_arc = (uint8_t *)&(S->all_arcs[x]);
@@ -1049,7 +1102,8 @@ static uint8_t read_header (nanograph_instance_t *S)
     S->node_parameters_offset = S->node_parameters_offset + (uint8_t)(NBW32_MEMREQ_LW2 * (1u + x));
 
     if (0 != RD(S->node_header[0], KEY_LW0))
-    {   S->node_parameters_offset += NBWORDS_KEY_USER_PLATFORM;
+    {
+        S->node_parameters_offset += NBWORDS_KEY_USER_PLATFORM;
     }
 
     /* default parameters of the node */
@@ -1124,7 +1178,8 @@ static void upload_new_parameters (nanograph_instance_t *S)
     while ((new_parameters[NEWPARAM_INDEX] != 0) && (new_parameters[NEWPARAM_ADDRESS] != 0) && (max_param_search > 0))
     {
         if (new_parameters[NEWPARAM_INDEX] == node_offset)
-        {   set_reset_parameters(S, (uint32_t *)(new_parameters[NEWPARAM_ADDRESS]));
+            {
+                set_reset_parameters(S, (uint32_t*)(new_parameters[NEWPARAM_ADDRESS]));
             new_parameters[NEWPARAM_ADDRESS] = 0;   // tell the parameters have been taken into account
             break;
         }
@@ -1263,7 +1318,8 @@ static void reset_component (nanograph_instance_t *S)
     /* does the node was already RESET by another thread/processor ? */
     pt8_state = S->pt8b_collision_arc + COLLISION2CTRL_BYTES;
     if (0 != (*pt8_state & (1 << RESETDONE_ARCW1_LSB))) /* check NODESTATE_ARCW2_LSB */
-    {   return;
+        {
+            return;
     }
 
     /* reset the component with the parameter TraceID (6bits) */
@@ -1292,7 +1348,8 @@ static void reset_component (nanograph_instance_t *S)
     narc = (uint8_t)(MIN(MAX_NB_NANOGRAPH_PER_NODE, RD(S->node_header[0], NBARCW_LW0)));
 
     for (j = 0; j < narc; j++)
-    {   uint32_t* F, ifmt, arcID, *arcpt;
+        {
+            uint32_t* F, ifmt, arcID, * arcpt;
 
         arcID = (S->arcID)[j];
         arcpt = &(S->all_arcs[SIZEOF_ARCDESC_W32 * (ARC_RX0TX1_CLEAR & arcID)]);
@@ -1306,12 +1363,14 @@ static void reset_component (nanograph_instance_t *S)
         }
 
         if (ifmt == ARC_ID_UNUSED)              // unused arcs take format 0
-        {   ifmt = 0;
+            {
+                ifmt = 0;
         }
         ifmt = NANOGRAPH_FORMAT_SIZE_W32 * ifmt;
         F = &(S->all_formats[ifmt]);
         for (iformat = 0; iformat < NANOGRAPH_FORMAT_SIZE_W32; iformat++)
-        {   memreq_physical[imem++] = F[iformat];
+            {
+                memreq_physical[imem++] = F[iformat];
         }
     }
 
@@ -1330,7 +1389,8 @@ static void reset_component (nanograph_instance_t *S)
 
         /* start the loop with the second memory bank */
         for (imem = 0; imem < nbmem; imem++)
-        {   uint32_t command = ST(command, FUNCTION_SSRV, NANOGRAPH_MALLOC);
+            {
+                uint32_t command = ST(command, FUNCTION_SSRV, NANOGRAPH_MALLOC);
             intptr_t segment_address = 0;
 
             command = PACK_SERVICE(0, 0, 0, NANOGRAPH_MALLOC, SERV_GROUP_STDLIB);
@@ -1369,7 +1429,8 @@ static void reset_component (nanograph_instance_t *S)
     
     /* list of memory segment to swap */
     if (TEST_BIT(S->scheduler_control, CLEARSWAP_SCTRL_LSB))
-    {   load_clear_memory_segments(S, 0);
+        {
+            load_clear_memory_segments(S, 0);
     }
 
     /* pre-execution script */
@@ -1388,7 +1449,8 @@ static void reset_component (nanograph_instance_t *S)
 
     /* check memory segments for restore / swap back */
     if (TEST_BIT(S->scheduler_control, CLEARSWAP_SCTRL_LSB))
-    {   load_clear_memory_segments (S, 1);
+        {
+            load_clear_memory_segments(S, 1);
     }    
 
     /* notify Reset is done : (NODESTATE_ARCW2_LSB = 1) */
@@ -1458,18 +1520,21 @@ static void run_node (nanograph_instance_t *S)
     /* is there a pending request to update the parameters of this node ? */  
     pt8 = S->pt8b_collision_arc + COLL2NEWPARAM_BYTES;
     if (*pt8 & (1 << NEW_PARAM_ARCW1_BIT_LSB))
-    {   upload_new_parameters (S);
+        {
+            upload_new_parameters(S);
         *pt8 &= (~(1 << NEW_PARAM_ARCW1_BIT_LSB));
     }
 
     /* push all the ARCs on the stack/xdm_buffer and check arcs buffer are ready */
     if (0u == arc_index_update(S, xdm_data, 0))
-    {   return; /* buffers are not ready */
+        {
+            return; /* buffers are not ready */
     }
 
     /* last minute check before processing */
     if (0 == check_component_still_locked_for_me(S))
-    {   return;
+        {
+            return;
     }
 
     /* flag : still one component is processing data in the graph */
@@ -1477,7 +1542,8 @@ static void run_node (nanograph_instance_t *S)
    
     /* list of memory segment to swap */
     if (TEST_BIT(S->scheduler_control, CLEARSWAP_SCTRL_LSB))
-    {   load_clear_memory_segments (S, 0);
+        {
+            load_clear_memory_segments(S, 0);
     }
 
     /* pre-execution script */
@@ -1493,8 +1559,7 @@ static void run_node (nanograph_instance_t *S)
            long NODE can be split to allow data moves without RTOS */
         nanograph_calls_node (S,
             S->node_instance_addr, xdm_data,  &check);
-    } 
-    while ((check == NODE_TASKS_NOT_COMPLETED) && ((--loop_counter) > 0));
+        } while ((check == NODE_TASKS_NOT_COMPLETED) && ((--loop_counter) > 0));
     
     /*  output FIFO write pointer is incremented AND a check is made for data 
         re-alignment to base adresses (to avoid address looping)
@@ -1506,7 +1571,8 @@ static void run_node (nanograph_instance_t *S)
 
     /* check memory segments for restore / swap back */
     if (TEST_BIT(S->scheduler_control, CLEARSWAP_SCTRL_LSB))
-    {   load_clear_memory_segments (S, 1);
+        {
+            load_clear_memory_segments(S, 1);
     }    
 
     if (script_option == NANOGRAPH_SCHD_SCRIPT_LEVEL1) {script_processing (S->main_script, 0);}

@@ -44,7 +44,7 @@ extern "C"
 {
 #endif
 
- 
+#undef ARM_MATH_DSP
 
 /*
 

@@ -372,47 +372,6 @@ void NanoGraph_services_math (uint32_t command, intptr_t ptr1, intptr_t ptr2, in
 #endif
 }
 
-
-/**
-  @brief        multimedia audio services entry point
-  @param[in]    instance   pointers to the Stream instance and graph data
-  @param[in]    command    Bit-field of command (see enum nanograph_command)
-  @param[in]    ptr1       data pointer
-  @param[in]    ptr2       data pointer
-  
-
-  @return       none
-  @par
-  @remark
- */
-void NanoGraph_services_mm_audio (uint32_t command, intptr_t ptr1, intptr_t ptr2, intptr_t ptr3, intptr_t n) 
-{
-#ifdef SERV_EXTAUDIO
-
-#endif
-}
-
-
-/**
-  @brief        image processing services entry point
-  @param[in]    instance   pointers to the Stream instance and graph data
-  @param[in]    command    Bit-field of command (see enum nanograph_command)
-  @param[in]    ptr1       data pointer
-  @param[in]    ptr2       data pointer
-  
-
-  @return       none
-  @par
-  @remark
- */
-void NanoGraph_services_mm_image (uint32_t command, intptr_t ptr1, intptr_t ptr2, intptr_t ptr3, intptr_t n) 
-{
-#ifdef SERV_EXTIMAGE
-
-#endif
-}
-
-
 /**
   @brief        remote debugger command interpreter (set/read parameters)
   @param[in]    
@@ -648,16 +607,8 @@ void nanograph_services (uint32_t command, intptr_t ptr1, intptr_t ptr2, intptr_
             }
         break;
     case SERV_GROUP_DEEPL:
-        NanoGraph_services_mm_audio(command, ptr1, ptr2, ptr3, n);
         break;
         
-    case SERV_GROUP_MM_AUDIO:
-        NanoGraph_services_mm_audio(command, ptr1, ptr2, ptr3, n);
-        break;
-
-    case SERV_GROUP_MM_IMAGE:
-        NanoGraph_services_mm_image(command, ptr1, ptr2, ptr3, n);
-        break;
 
         /*----------------------------------------------------------------------------
            nano_graph_interpreter interface is used for "special" services       

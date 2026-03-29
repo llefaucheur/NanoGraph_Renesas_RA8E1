@@ -3,7 +3,7 @@
 ; ------------------------------------------------------------------------------------------------------------
 ;
 node_developer_name         ARM                 ; developer name
-node_name                   arm_stream_filter   ; node name
+node_name                   arm_filter          ; node name
 
 node_mask_library            16                 ; dependency with DSP services
 

@@ -296,7 +296,7 @@
         -  (NANOGRAPH_STOP, ptr1, ptr2, ptr3); 
     */
     #define NANOGRAPH_RESET            1u  /* arm_graph_interpreter(NANOGRAPH_RESET, *instance, * memory_results) */
-        #define COMMDEXT_COLD_BOOT    0u  /* if (NANOGRAPH_COLD_BOOT == RD(command, COMMDEXT_CMD)) */
+        #define COMMDEXT_COLD_BOOT    0u  /* if (NANOGRAPH_COLD_BOOT == RD(command, COMMDEXT_CMD)) default */
         #define COMMDEXT_WARM_BOOT    1u  /* Reset + restore memory banks from retention */
         #define COMMDEXT_DYN_MALLOC   2u  /* pre-reset phase : ask for the amount of memory to allocate */
 
@@ -326,6 +326,7 @@
     #define NANOGRAPH_WRITE_DATA       9u   /* COMMAND_SSRV syscall write access to arc data */
 
     #define NANOGRAPH_LIBRARY          10u  /* other functions of the node (IIR parameters compute, ..) */
+    #define NANOGRAPH_SET_USE_CASE_OPP 11u  /* update operation performance point and use-case */
 
     #define NOWAIT_OPTION_SSRV      0u   /* OPTION_SSRV  stall or not the COMMAND */
     #define   WAIT_OPTION_SSRV      1u
@@ -365,15 +366,10 @@
                 script resets the activated nodes if overlaid with other ones
             - system regsters access: who am I ?
             - time measurement for cycle benchmarks (read timer /time difference)
-    - 2 : arc access for SCRIPT : pointer, last data, debug fields, format changes
-    - 3 : format converters (time, raw data)
-    - 4 : stdlib.h subset (time, stdio)
-    - 5 : math.h subset
-    - 6 : Interface to CMSIS-DSP
-    - 7 : Interface to CMSIS-NN
-    - 8 : Multimedia audio library
-    - 9 : Image processing library
-    - 10..15 : reserved
+    - 2 : the standard library (string.h, malloc).
+    - 3 : math functions (trigonometry, random numbers, time processing, conversions).
+    - 4 : DSP and ML functions (filtering, FFT).
+    - 5 : linear algebra for neural networks (Fully connected, 2D convolution)
 
     each family can define 256 operations (TAG_CMD_LSB)
 */
@@ -422,8 +418,36 @@
 #define SERV_GROUP_MATH         3u  /* 8   N math.h */
 #define SERV_GROUP_DSP_ML       4u  /* 16  N cmsis-dsp */
 #define SERV_GROUP_DEEPL        5u  /* 32  N cmsis-nn */
-#define SERV_GROUP_MM_AUDIO     6u  /* 64  Y speech/audio processing */
-#define SERV_GROUP_MM_IMAGE     7u  /* 128 Y image processing */
+#define NB_SERV_GROUPS          6   /* size of table bit_field_services[] */
+
+
+//enum error_codes 
+#define ERROR_MEMORY_ALLOCATION     1u
+
+
+/*
+    NANOGRAPH SERVICES
+*/
+
+#define  UNUSED_SRV_MSB  31u
+#define  UNUSED_SRV_LSB  16u /* 16 reserved */
+#define    INST_SRV_MSB  15u       
+#define    INST_SRV_LSB  12u /* 4  instance */
+#define   GROUP_SRV_MSB  11u       
+#define   GROUP_SRV_LSB   8u /* 4  command family groups under compilation options (DSP, Codec, Stdlib, ..) */
+#define COMMAND_SRV_MSB   7u       
+#define COMMAND_SRV_LSB   0u /* 8  256 service IDs */
+
+
+/*
+    Up to 16 family of processing extensions "SERVICE_COMMAND_GROUP"
+    EXTDSPML EXTMATH EXTSTDLIB
+*/
+#define EXT_SERVICE_MATH   1u
+#define EXT_SERVICE_DSPML  2u
+#define EXT_SERVICE_STDLIB 3u
+
+
 
 
 /* --------------------------------------------------------------------------- */
@@ -562,14 +586,26 @@
     #define SERV_SCRIPT_DMA_STOP           11u
     #define SERV_SCRIPT_DMA_CHECK          12u
 
-/* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 3/SERV_CONVERSION -------------------------------------------- */
-/* --------------------------------------------------------------------------- */
-    #define SERV_CONVERSION_INT16_FP32 1
+
+    /*
+    * system subroutines :
+    * - IO settings :
+    * - Get Time, in different formats, and conversion, extract time-stamps
+    * - Get Peripheral data : RSSI, MAC/IP address
+    * - Low-level : I2C string of commands, GPIO, physical address to perpherals
+    */
+#define PLATFORM_DEEPSLEEP_ENABLED 20u   /* deep-sleep activation is possible when returning from arm_graph_interpreter(NANOGRAPH_RUN..) */
+#define PLATFORM_TIME_SET          21u
+#define PLATFORM_RTC_SET           22u
+#define PLATFORM_TIME_READ         23u
+#define PLATFORM_HW_WORD_READ      24u  
+#define PLATFORM_HW_WORD_WRITE     25u  
+#define PLATFORM_HW_BYTE_READ      26u  
+#define PLATFORM_HW_BYTE_WRITE     27u  
 
 
 /* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 4/SERV_STDLIB ------------------------------------------------ */
+/* GROUP_SSRV = 2/SERV_STDLIB ------------------------------------------------ */
 /* --------------------------------------------------------------------------- */
 
     /* stdlib.h */
@@ -586,23 +622,26 @@
     #define NANOGRAPH_STRNCPY  10u
     #define NANOGRAPH_STRSTR   11u
     #define NANOGRAPH_STRTOK   12u
-    //NANOGRAPH_ATOF, NANOGRAPH_ATOI
+    //
+    //#define NANOGRAPH_ATOF 
+    //#define NANOGRAPH_ATOI
+
     #define NANOGRAPH_FREE     13u
     #define NANOGRAPH_MALLOC   14u
 
 
 /* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 5/SERV_MATH -------------------------------------------------- */
+/* GROUP_SSRV = 3/SERV_MATH -------------------------------------------------- */
 /* --------------------------------------------------------------------------- */
 
     /* minimum service : tables of 64 data RAND, SRAND */
-    #define NANOGRAPH_RAND     1 /* (NANOGRAPH_RAND + OPTION_SSRV(seed), *ptr1, 0, 0, n) */
-    #define NANOGRAPH_SRAND    2
-    #define SERV_TABLE_SIN      
-    #define SERV_TABLE_TAN      
-    #define SERV_TABLE_ATAN      
-    #define SERV_TABLE_SQRT      
-    #define SERV_TABLE_LOG
+    #define NANOGRAPH_RAND          1u  /* (NANOGRAPH_RAND + OPTION_SSRV(seed), *ptr1, 0, 0, n) */
+    #define NANOGRAPH_SRAND         2u
+    #define SERV_TABLE_SIN          3u
+    #define SERV_TABLE_TAN          4u
+    #define SERV_TABLE_ATAN         5u
+    #define SERV_TABLE_SQRT         6u
+    #define SERV_TABLE_LOG          7u
 
 
     /* returns a code corresponding to the processor architecture and its FPU options */
@@ -633,18 +672,22 @@
     #define SERV_MATH_ATAN2_Q15      23
     #define SERV_MATH_ATAN2_F32      24
                
-    #define SERV_MATH_SORT           3 
+    #define SERV_MATH_PID_INIT_F32      25
+    #define SERV_MATH_PID_F32           26
+    #define SERV_MATH_PARKS_F32         27
+    #define SERV_MATH_INV_PARK_F32      28
+    #define SERV_MATH_CLARK_F32         29
+    #define SERV_MATH_INV_CLARK_F32     30
+                                        
+
+    #define SERV_MATH_SORT              31
+    #define SERV_MATH_INT16_FP32        32
 
 
 /* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 6/SERV_DSP_ML ------------------------------------------------ */
+/* GROUP_SSRV = 4/SERV_DSP_ML ------------------------------------------------ */
 /* --------------------------------------------------------------------------- */
 
-    /* list from ETAS "Embedded AI Coder" :
-    * Batchnorm, Convolutions, Depthwise Convolutions, LSTM, Fully Connected, Elementwise Add, Sub, Mul, 
-    Softmax, Relu, Leaky Relu, Logistic, Padding, StridedSlice, Tanh, MaxPooling, AveragePooling and 
-    TransposeConv. It supports the data types int8 and float32.
-    */
     /* minimum service : IIRQ15/FP32, DFTQ15/FP32 */
             /* FUNCTION_SSRV */
     #define SERV_DSP_CHECK_COPROCESSOR  1u   /* check for services() */
@@ -675,7 +718,7 @@
 
 
 /* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 7/SERV_DEEPL ------------------------------------------------ */
+/* GROUP_SSRV = 5/SERV_DEEPL ------------------------------------------------- */
 /* --------------------------------------------------------------------------- */
 
         /* COMMAND_SSRV */
@@ -686,70 +729,16 @@
     #define NANOGRAPH_FC                   /* fully connected layer Mat x Vec */
     #define NANOGRAPH_CNN                  /* convolutional NN : 3x3 5x5 fixed-weights */
 
-
-/* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 8/SERV_MM_AUDIO ------------------------------------------------ */
-/* --------------------------------------------------------------------------- */
-
-        /* COMMAND_SSRV */
-
-        /* OPTION_SSRV */
-
-        /* FUNCTION_SSRV */
-
-/* --------------------------------------------------------------------------- */
-/* GROUP_SSRV = 9/SERV_MM_IMAGE ------------------------------------------------ */
-/* --------------------------------------------------------------------------- */
-
-        /* COMMAND_SSRV */
-
-        /* OPTION_SSRV */
-
-        /* FUNCTION_SSRV */
-            // SOBEL
-
-/*
-* system subroutines : 
-* - IO settings : 
-* - Get Time, in different formats, and conversion, extract time-stamps
-* - Get Peripheral data : RSSI, MAC/IP address
-* - Low-level : I2C string of commands, GPIO, physical address to perpherals
-*/
-#define PLATFORM_DEEPSLEEP_ENABLED 20u   /* deep-sleep activation is possible when returning from arm_graph_interpreter(NANOGRAPH_RUN..) */
-#define PLATFORM_TIME_SET          21u
-#define PLATFORM_RTC_SET           22u
-#define PLATFORM_TIME_READ         23u
-#define PLATFORM_HW_WORD_READ      24u  
-#define PLATFORM_HW_WORD_WRITE     25u  
-#define PLATFORM_HW_BYTE_READ      26u  
-#define PLATFORM_HW_BYTE_WRITE     27u  
-
-//enum error_codes 
-#define ERROR_MEMORY_ALLOCATION     1u
-
-
-/*
-    STREAM SERVICES
+    /* List from HSP (STM32) : 
+    list from ETAS "Embedded AI Coder" :
+     Batchnorm, Convolutions, Depthwise Convolutions, LSTM, Fully Connected, Elementwise Add, Sub, Mul,
+    Softmax, Relu, Leaky Relu, Logistic, Padding, StridedSlice, Tanh, MaxPooling, AveragePooling and
+    TransposeConv. It supports the data types int8 and float32.
 */
 
-#define  UNUSED_SRV_MSB  31u
-#define  UNUSED_SRV_LSB  16u /* 16 reserved */
-#define    INST_SRV_MSB  15u       
-#define    INST_SRV_LSB  12u /* 4  instance */
-#define   GROUP_SRV_MSB  11u       
-#define   GROUP_SRV_LSB   8u /* 4  command family groups under compilation options (DSP, Codec, Stdlib, ..) */
-#define COMMAND_SRV_MSB   7u       
-#define COMMAND_SRV_LSB   0u /* 8  256 service IDs */
 
+/* --------------------------------------------------------------------------- */
 
-/*
-    Up to 16 family of processing extensions "SERVICE_COMMAND_GROUP"
-    EXTDSPML EXTMATH EXTSTDLIB
-*/
-
-#define EXT_SERVICE_MATH   1u
-#define EXT_SERVICE_DSPML  2u
-#define EXT_SERVICE_STDLIB 3u
 
 
 

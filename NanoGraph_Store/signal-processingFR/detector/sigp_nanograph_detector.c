@@ -26,8 +26,9 @@
 
 #include <stdint.h>
 
-#include "../../../top_manifest_included.h"
-#include "../../../nanograph_common.h"
+#include "../../nanograph_store_common_const.h"
+#include "../../top_manifest_included_in_Store.h"
+#include "../../nanograph_store_common_types.h"
 
 
 #ifdef __cplusplus
@@ -182,7 +183,7 @@ void sigp_nanograph_detector (unsigned int command, void *instance, void *data, 
             intptr_t nb_data, nanograph_xdmbuffer_size, bufferout_free;
             nanograph_xdmbuffer_t *pt_pt;
             #define SAMP_IN int16_t 
-            #define SAMP_OUT int32_t
+            #define SAMP_OUT int16_t
             SAMP_IN *inBuf;
             SAMP_OUT *outBuf;
 
@@ -200,7 +201,7 @@ void sigp_nanograph_detector (unsigned int command, void *instance, void *data, 
             pt_pt = data;
             *(&(pt_pt->size)) = nb_data * sizeof(SAMP_IN);  /* amount of data consumed */
             pt_pt ++;
-            *(&(pt_pt->size)) = 1 * sizeof(SAMP_OUT);       /* amount of data produced */
+            *(&(pt_pt->size)) = nb_data * sizeof(SAMP_OUT);       /* amount of data produced */
             break;
         }
         case NANOGRAPH_STOP :

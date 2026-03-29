@@ -47,11 +47,12 @@
 
     Registers 
         Instance static (ARC buffer) = 128 Bytes + processing = 150 Bytes
-            14 r0..r13 data in FP E16M32 format or in Pointer format
+            14 r0..r13 data in FP E8M32 format or in Pointer format
                r10..r13 are preset as pointers to heap (PTR_MEMBANK_HEAP)
-            1  r14 null register and used to load int/fp32 constant
+            1  r14 null register and used to load int/fp32 constant converted to E8M32
             1  r15 is mapped to the stack index "SP"  of the instance
             T  internal flag, result of the tests 0=No, 1=Yes
+            Y  shadow parameter register, selection of entry/exit script
 
     W32 script offset table[7 = 127 SCRIPT_LW0] to the byte codes 
         [SCRIPTSSZW32_GR1] = 
@@ -96,7 +97,7 @@
     
     p --- MSB word ----------------> <----- LSB word --------------->  
     1HHH____SIZE(12   BASE(12___TYPE <------------------------------> data TYPE for pointer access (p=1)
-    0_________________XXXXXXXX__TYPE <----either float or sint32----> (p=0) provision for extra matissa accuracy for integer operations
+    0___________________xxxxxxxxTYPE <---- FP E8M32             ----> (p=0) provision for extra matissa accuracy for integer operations
     FEDCBA9876543210FEDCBA987654321_ FEDCBA9876543210FEDCBA987654321_
 
     Encoded instructions : 
@@ -119,6 +120,7 @@
     test_if r1  != 0x123       NO_COND_EXE OP_TESTNEQ OPAR_NOP   R1-00.- R1411.- R14-00._  0x00000123
     and_if  12  <  r3          NO_COND_EXE OP_TESTLT  OPAR_NOP   R1410.- R3-00.- R14-00._  000000000C
     test_if r1  != r1          NO_COND_EXE OP_TESTEQU OPAR_NOP   R1-00.- R1-00.- --------  set the test flag to FALSE
+    test_if p1[12] == s[2] | 8 10 |        OP_TESTEQU OPAR_RDBF  P1-11.0 ST-11.0 __-__._   0x0002 0x000C 0x0A08  
 
     test_if p1[12] == p3[13] * p4[14]+      
                                NO_COND_EXE OP_TESTEQU OPAR_ADD   R1-11.0 R3-11.0- R4-11.1  000000E 000000D 000000C
@@ -186,6 +188,58 @@
     restore P3[1]+  R1 R2          OP_SETJUMP OPLJ_RESTORE R15-01.1 ___________XX_  restore in the reverse order
         pop         R1 R2          OP_SETJUMP OPLJ_RESTORE R15-10.1 ___________XX_
 
+    Macro language (SYSCALL)
+    --------------
+    const char8 LBLTOTO [10] = "123456789"      declare data in Flash (in the graph)
+    heap  int16 LBLTATA [3]  = 12 13 14         declare data in RAM
+    heap  char8 LBLTITI [80] 
+    p0 = LBLTOTO
+
+    STRCAT p1 p0 "11"           (dest_char, src1_char, src2_char or constant until finding '/0')
+    SPRINT p1 r0 f4.2           (dest_char, number/reg, format X/f/d size)
+    SFIND p2/_ r1/_ p1 p0       (dest_char, position, source, pattern or constant until finding '/0')
+    SFINDNEXT p2/_ r1/_ p1 p0 
+    SFINDLAST p2/_ r1/_ p1 p0   (dest_char, position, source, pattern)
+    SLENGTH r1 p1
+    SREPLACE p2 p1 p0           replace a substring by another
+    SCOMPARE p2 p1 r0/K C       comparison result in Flag, check case
+    use-case https://docs.odriverobotics.com/v/latest/manual/ascii-protocol.html#command-format
+        q motor position velocity_lim torque_lim    q 0 -2 1 0.1
+
+    AT+CMD?
+    +CMD:0,"AT",0,0,0,1
+    +CMD:1,"ATE0",0,0,0,1
+    +CMD:2,"ATE1",0,0,0,1
+    +CMD:3,"AT+RST",0,0,0,1
+
+    E4B3-2386-18C4=1;ch=6;      Turn on the relay; device response required (ESP32)
+        bool sendSwitchCommandWithResponse(const String& deviceMac, bool switchOn, unsigned long timeoutMs = 5000, SwitchC6ParsedData_t* response = nullptr)
+        Send an ON/OFF command and wait for a response.
+
+        Parameters:
+        deviceMac - Device MAC address
+        switchOn - ON/OFF
+        timeoutMs - Timeout in milliseconds (default 5000ms)
+        response - Optional pointer to response struct
+        Returns: true if response received, otherwise false
+
+    Macro language for computations => Nodes
+    Macro language for IOs  =>  
+    PRINT 
+    TRACE 
+    Command interpreter : Consistent Overhead Byte Stuffing COBS https://en.wikipedia.org/wiki/Consistent_Overhead_Byte_Stuffing
+    STARTBYTE | ADDR | CMD | DATALEN | DATA... | SUM | STOPBYTE
+    Modbus rtu - Serial UART https://www.modbus.org/file/secure/modbusprotocolspecification.pdf
+        https://uk.mathworks.com/help/ecoder/stmicroelectronicsstm32f4discovery/ref/modbusread.html
+        https://www.ip-systemes.com/quest-ce-que-modbus-rtu.html
+        https://docs.zephyrproject.org/latest/build/dts/api/bindings/misc/zephyr%2Cmodbus-serial.html
+        https://en.wikibooks.org/wiki/Serial_Programming/Forming_Data_Packets
+        https://github.com/odriverobotics/ODrive https://docs.odriverobotics.com/v/latest/guides/getting-started.html
+        https://openrtk.readthedocs.io/en/latest/communication_port/User_uart.html?highlight=crc16
+        https://www.embeddedrelated.com/showarticle/113.php
+        https://eli.thegreenplace.net/2009/08/12/framing-in-serial-communications/
+        https://pypi.org/project/cobs/   https://datatracker.ietf.org/doc/html/draft-ietf-pppext-cobs-00
+        
 */
 
 
@@ -349,6 +403,7 @@
 #define OPLJ_SAVE         9 // save up to 14 registers
 #define OPLJ_RESTORE     10 // restore up to 14 registers   
 #define OPLJ_RETURN      11 // return {keep registers}
+#define OPLJ_PARAM       12 // move shadow parameter register to internal register
 
 #define OPLJ_NONE        32  
 
@@ -368,15 +423,15 @@
 #define DTYPE_UINT16   3  /* u16 */
 #define DTYPE_INT32    4  /* i32 */
 #define DTYPE_UINT32   5  /* u32 */
-#define DTYPE_TIME32   6  /* reserved */
-#define DTYPE_INT64    7  /* i64*/
-#define DTYPE_UINT64   8  /* u64 last integer type */
-#define DTYPE_FP8_E4M3 9  /* fp8 reserved */
-#define DTYPE_FP8_E5M2 10 /* fp8 reserved */
-#define DTYPE_FP16     11 /* fp16 reserved */
-#define DTYPE_FP32     12 /* fp32 */
-#define DTYPE_FP64     13 /* fp64 reserved */
-#define DTYPE_PTR28B   14 /* pointer with software MMU */
+#define DTYPE_FP32     6 /* fp32 */
+#define DTYPE_FP64     7 /* fp64 */
+#define DTYPE_INT64    8 /*  i64 */
+#define DTYPE_PTR28B   9 /* pointer for software MMU */
+#define DTYPE_CHAR8   10 /* */
+#define DTYPE_CHAR16  11 /* */
+#define DTYPE_DTIME   12 /* */
+#define DTYPE_TIME    13 /* */
+
 
 
 #endif  // if cNanoGraph_script_instructions_h
@@ -401,7 +456,7 @@
             (*al_func)(
                 PACK_SERVICE(NANOGRAPH_READ_DATA, NOWAIT_OPTION_SSRV, PARAM_TAG, 
                     SYSCALL_FUNCTION_SSRV_NODE, SERV_GROUP_SCRIPT), 
-                offset to the node from graph_computer_header.h (ex: #define NanoGraph_filter_0  0x15)
+                offset to the node from graph_platform_header.h (ex: #define NanoGraph_filter_0  0x15)
                 address of the data move,
                 unused
                 number of bytes
@@ -418,7 +473,7 @@
               01000000010000000000000000000000 = 3.0   = 2^(128-127) x (1 + 40 0000/80 0000) = 2 x 1.5
               MAX = 3.4E38    MIN = 1.2E-38
 
-    Format allowing full 32bits accuracy (for bit masking) and float32 accuracy :
+    Format allowing full 32bits accuracy (for bit masking) and float32 accuracy :   E8M32 ?
      01111111 01111111111111111111111111111111 = AMAX  = 2^127 x 0.999 = 1.701E38
      10000000 01000000000000000000000000000000 = AMIN  = 2^-128 x 0.5 = 1.47E-39
 

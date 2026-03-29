@@ -1,0 +1,77 @@
+# Makefile (gcc / C) - tailored for your project tree
+# Usage:
+#   make         -> Release build (O2)
+#   make DEBUG=1 -> Debug build (-g -O0)
+#   make clean   -> remove build artifacts
+
+# Toolchain
+CC := gcc
+AR := ar
+
+# Target
+TARGET := top_manifest
+
+# Build directories
+SRCDIR := .
+BUILDDIR := build
+
+# Include directories (adjust if needed)
+INCLUDE_DIRS := include libraries/CMSIS-DSP/Include libraries/CMSIS-DSP/PrivateInclude
+INCLUDES := $(addprefix -I,$(INCLUDE_DIRS))
+
+# Debug / Release
+DEBUG ?= 0
+CFLAGS_COMMON := -std=gnu11 -Wall -Wextra -Wpedantic -Wunused-parameter
+ifeq ($(DEBUG),1)
+    CFLAGS := $(CFLAGS_COMMON) -g -O0
+else
+    CFLAGS := $(CFLAGS_COMMON) -O2
+endif
+
+# Dependency generation
+CFLAGS += -MMD -MP $(INCLUDES)
+
+# Preprocessor defines (edit if you have project-specific macros)
+DEFINES :=
+
+# Linker flags/libs (add -L paths to LDFLAGS, -lname to LDLIBS if needed)
+LDFLAGS :=
+LDLIBS := -lm -lpthread
+
+# Auto-discover sources (exclude build directory)
+SRCS := $(shell find $(SRCDIR) -name '*.c' -not -path '$(BUILDDIR)/*' -not -path './$(BUILDDIR)/*')
+# Map sources to object files in build dir preserving subdirs
+OBJS := $(patsubst ./%, $(BUILDDIR)/%, $(SRCS:.c=.o))
+DEPS := $(OBJS:.o=.d)
+
+.PHONY: all clean distclean show
+
+all: $(TARGET)
+
+# Link the final binary
+$(TARGET): $(OBJS)
+	@echo "Linking $@"
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+# Compile: ensure target directory exists
+$(BUILDDIR)/%.o: ./%.c
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<"
+	$(CC) $(CFLAGS) $(DEFINES) -c $< -o $@
+
+# Include auto-generated dependency files
+-include $(DEPS)
+
+clean:
+	@echo "Cleaning..."
+	$(RM) -r $(BUILDDIR) $(TARGET)
+
+distclean: clean
+
+# Print useful variables for debugging
+show:
+	@echo "CC = $(CC)"
+	@echo "CFLAGS = $(CFLAGS)"
+	@echo "INCLUDE_DIRS = $(INCLUDE_DIRS)"
+	@echo "SRCS ="
+	@printf "  %s\n" $(SRCS)

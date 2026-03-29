@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------
  * Project:      NanoGraph
- * Title:        platform_computer.c
+ * Title:        platorm_init.c
  * Description:  platform-specific declarations (memory, nodes)
  *
  * $Date:        15 February 2023

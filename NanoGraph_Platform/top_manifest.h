@@ -11,6 +11,8 @@
 #define PLATFORM_ARCH_32BIT
 //#define PLATFORM_ARCH_64BIT
 
+#define TIME_BASE_1MS                       /* SYSTICK time base */
+#define PROCESSOR_CLOCK 350000000L          /* SYSTICK clock */
 
 #define NANOGRAPH_NB_INSTANCE 1
 #define PLATFORM_PROCESSOR 1            
@@ -26,12 +28,14 @@
 #define NB_NODE_ENTRY_POINTS 30
 
 /* max number of application callbacks used from NODE and scripts */
-#define MAX_NB_APP_CALLBACKS 8
+#define MAX_NB_APP_CALLBACKS 4
 
 #define MULTIPROCESSING                 /* enable memory flush conditional codes */
 //#define MEMID0_CACHED                   /* ARC descriptors in MEMID0,  default is uncached (ex. Cortex-M0) */
 
-#define CACHE_LINE_BYTE_LENGTH 0            /* 0Byte armv6/v7   32 (CM7/CM55) 64 Cortex-A armv8/v9 */
+#define CACHE_LINE_BYTE_LENGTH 0        /* 0 for Cortex-M armv6/v7/v8-m */
+//#define CACHE_LINE_BYTE_LENGTH 32       /* 32Bytes (CM7/CM55) */
+//#define CACHE_LINE_BYTE_LENGTH 64       /* 64bytes for Cortex-A armv8/v9 */
 
 /*
  * --- maximum number of processors using STREAM in parallel - read by the graph compiler
@@ -47,39 +51,60 @@
 #define MBANK_GRAPH     0               /* share graph base address */
 #define MBANK_DMEMFAST  1               /* not shared DTCM Cortex-M/LLRAM Cortex-R, swapped between NODE calls if static */
 
-#define SIZE_MBANK_DMEM_EXT    500000   /* general purpose          */
-#define SIZE_MBANK_DTCM         1000    /* simulates DTCM           */
-#define SIZE_MBANK_ITCM         1000    /* simulates ITCM           */
+#define SIZE_MBANK_DMEM_EXT     5000    /* general purpose          */
+#define SIZE_MBANK_DTCM          100        /* simulates DTCM           */
+#define SIZE_MBANK_ITCM          100        /* simulates ITCM           */
 #define SIZE_MBANK_RETENTION     100    /* simulates retention      */
 
 
         /* warning : changing the indexes impacts the "top_graph_interface" of each graph.txt */
 #define IO_PLATFORM_DATA_SINK        0 
-#define IO_PLATFORM_DATA_IN_1        1 
-#define IO_PLATFORM_SENSOR_0         2 
-#define IO_PLATFORM_MOTION_IN_0      3 
-#define IO_PLATFORM_AUDIO_IN_0       4 
-#define IO_PLATFORM_2D_IN_0          5 
-#define IO_PLATFORM_LINE_OUT_0       6 
-#define IO_PLATFORM_GPIO_OUT_0       7 
-#define IO_PLATFORM_GPIO_OUT_1       8 
-#define IO_PLATFORM_DATA_OUT_0       9
 
+#define IO_PLATFORM_DATA_IN_0         1
+#define IO_PLATFORM_DATA_IN_1         2
+#define IO_PLATFORM_DATA_OUT_0        3
+#define IO_PLATFORM_DATA_OUT_1        4
+#define IO_PLATFORM_SENSOR_IN_0       5
+#define IO_PLATFORM_SENSOR_IN_1       6
+#define IO_PLATFORM_SENSOR_IN_2       7
+#define IO_PLATFORM_SENSOR_IN_3       8
+#define IO_PLATFORM_TIMER_0           9
+#define IO_PLATFORM_TIMER_1           10
+#define IO_PLATFORM_UI_IN_0           11
+#define IO_PLATFORM_UI_IN_1           12
+#define IO_PLATFORM_UI_IN_2           13
+#define IO_PLATFORM_UI_IN_3           14
+#define IO_PLATFORM_UI_OUT_0          15
+#define IO_PLATFORM_UI_OUT_1          16
+#define IO_PLATFORM_UI_OUT_2          17
+#define IO_PLATFORM_UI_OUT_3          18
+#define IO_PLATFORM_SERIAL_IN_0       19
+#define IO_PLATFORM_SERIAL_OUT_0      20
+#define IO_PLATFORM_ANALOG_IN_0       21
+#define IO_PLATFORM_ANALOG_OUT_0      22
+#define IO_PLATFORM_AUDIO_IN_0        23
+#define IO_PLATFORM_AUDIO_IN_1        24
+#define IO_PLATFORM_AUDIO_IN_2        25
+#define IO_PLATFORM_AUDIO_OUT_0       26
+#define IO_PLATFORM_AUDIO_OUT_1       27
+#define IO_PLATFORM_AUDIO_OUT_2       28
+#define IO_PLATFORM_2D_IN_0           30
+#define IO_PLATFORM_2D_IN_1           31
+#define IO_PLATFORM_2D_OUT_0          32
+#define IO_PLATFORM_2D_OUT_1          33
+
+#define MAX_NBGRAPHIO (1 + IO_PLATFORM_2D_OUT_1)
 
 //#define LAST_IO_FUNCTION_PLATFORM (IO_PLATFORM_DATA_OUT_0+1)  /* table of platform_io[io_al_idx] */
 
 //#define MAX_IO_FUNCTION_PLATFORM 128     /* table of platform_io[io_al_idx] */
 
 /*===========================================================================
- in platform_computer.c : 
+ in platform_platform.c : 
     void platform_specific_long_offset(intptr_t long_offset[])
         long_offset[MBANK_GRAPH]    = (const intptr_t)&(MEXT[10]); 
         long_offset[MBANK_DMEMFAST] = (const intptr_t)&(TCM1[10]); 
 */
-//#define MAX_PROC_MEMBANK 4
-//#define CRITICAL_FAST_SEGMENT_IDX (MAX_PROC_MEMBANK-1)
-
-
 
 #define CODE_ARM_STREAM_SCRIPT          /* byte-code interpreter, index "arm_stream_script_INDEX" */
 #define CODE_ARM_STREAM_FILTER          /* cascade of DF1 filters */
@@ -87,7 +112,7 @@
 
 
 
-/*----- SERVICES ENABLED FOR "ra8e1" ------------------------------------------------------------------------*/
+/*----- SERVICES ENABLED -----------------------------------------------------------------------*/
 // SERV_GROUP_INTERNAL           /* 0  internal : Semaphores, DMA, Clocks */
     //#define PLATFORM_SERV_INTERNAL_SLEEP_CONTROL                              0
     //#define PLATFORM_SERV_INTERNAL_CPU_CLOCK_UPDATE                           1
@@ -143,6 +168,7 @@
     //#undef PLATFORM_SERV_SERV_DFT_F32            
 
     #define PLATFORM_SERV_DSP_CASCADE_DF1_Q15           /* IIR filters, use SERV_CHECK_COPROCESSOR */
+#define PLATFORM_SERV_DSP_CASCADE_DF1_Q15_ESS       /*  error spectral shaping */          
     //#define PLATFORM_SERV_DSP_CASCADE_DF1_F32         /* take the default implementation */
 
     //#undef PLATFORM_SERV_SERV_WINDOW                
@@ -160,6 +186,8 @@
 
 //#undef PLATFORM_SERV_SERV_GROUP_MM_IMAGE           /* 8 image processing */
 
+//optimization - fully - connected 
+//optimization - conv2d
 
 ///* conditional compilation */
 //#define NANOGRAPH_PLATFORM_SERVICES        /* call the platform service with its fast libraries w/wo accelerators */

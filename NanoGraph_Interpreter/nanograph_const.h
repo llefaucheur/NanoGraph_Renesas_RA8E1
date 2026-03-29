@@ -162,11 +162,11 @@
 #define    INST_ID_SCTRL_MSB U(31)  /*  from [A]pp [P]latform [S} scheduler */
 #define     WHOAMI_SCTRL_MSB U(31)
 #define   PRIORITY_SCTRL_MSB U(31)  /*   different RTOS instances*/
-#define   PRIORITY_SCTRL_LSB U(30)  /* 2 [0..3] up to 4 instances per processors, 0=main instance at boot */
+#define   PRIORITY_SCTRL_LSB U(30)  /* 2 [1..3] up to 3 instances per processors, 0="any" */
 #define     PROCID_SCTRL_MSB U(29)  
-#define     PROCID_SCTRL_LSB U(27)  /* 3 processor index [1..7] for this architecture 0="commander processor" */  
+#define     PROCID_SCTRL_LSB U(27)  /* 3 processor index [1..7] for this architecture 0="any" */  
 #define     ARCHID_SCTRL_MSB U(26)     
-#define     ARCHID_SCTRL_LSB U(24)  /* 3 [1..7] processor architectures 1="commander processor architecture" */
+#define     ARCHID_SCTRL_LSB U(24)  /* 3 [1..7] processor architectures  */
 #define     WHOAMI_SCTRL_LSB U(24)  /*   whoami used to lock a NODE to specific processor or architecture */
 #define    INST_ID_SCTRL_LSB U(24)  /*   8 bits identification for locks */
 #define     U0_____SCTRL_MSB U(23)     
@@ -176,7 +176,7 @@
 #define   RSTSTATE_SCTRL_MSB U(15)  /*   0=INIT 1=reset start 2=reset done 3=SYNC all reset done */
 #define   RSTSTATE_SCTRL_LSB U(14)  /* 2 set to wait the main instance  */ 
 #define   INST_IDX_SCTRL_MSB U(13)     
-#define   INST_IDX_SCTRL_LSB U( 9)  /* 5 up to 32 graph interpreter instances */   
+#define   INST_IDX_SCTRL_LSB U( 9)  /* 5 up to 31 graph interpreter instances >0 */   
 #define   MAININST_SCTRL_MSB U( 8)  /*    */   
 #define   MAININST_SCTRL_LSB U( 8)  /* 1 0 slave instance 1 main instance allowed to copy in RAM (LSB bit) */
 #define   NODEEXEC_SCTRL_MSB U( 7)     
@@ -223,14 +223,14 @@
 #define IO_DOMAIN_GENERAL                  0u /* (a)synchronous sensor + rescaling, electrical, chemical, color, .. remote data, compressed streams, JSON, SensorThings*/
 #define IO_DOMAIN_AUDIO_IN                 1u /* microphone, line-in, I2S, PDM RX */
 #define IO_DOMAIN_AUDIO_OUT                2u /* line-out, earphone / speaker, PDM TX, I2S, */
-#define IO_DOMAIN_GPIO                     3u /* generic digital IO, control of relay, timer ticks */
+#define IO_DOMAIN_GPIO                     3u /* generic digital IO, control of relay */
 #define IO_DOMAIN_MOTION                   4u /* accelerometer, combined or not with pressure and gyroscope */
 #define IO_DOMAIN_2D_IN                    5u /* camera sensor */
 #define IO_DOMAIN_2D_OUT                   6u /* display, led matrix, */
 #define IO_DOMAIN_ANALOG_IN                7u /* analog sensor with aging/sensitivity/THR control, example : light, pressure, proximity, humidity, color, voltage */
 #define IO_DOMAIN_ANALOG_OUT               8u /* D/A, position piezzo, PWM converter  */
 #define IO_DOMAIN_USER_INTERFACE           9u /* button, slider, rotary button, LED, digits, display */
-#define IO_DOMAIN_PLATFORM_6              10u                              
+#define IO_DOMAIN_TIME                    10u /* timer ticks */
 #define IO_DOMAIN_PLATFORM_5              11u                              
 #define IO_DOMAIN_PLATFORM_4              12u                              
 #define IO_DOMAIN_PLATFORM_3              13u
@@ -457,7 +457,7 @@
 #define  FORMAT_SCROFF0_MSB U(20) /* 3  byte codes format = 0, 7 binary native architecture ARCHID_LW0 */
 #define  FORMAT_SCROFF0_LSB U(19) /*       ARMv6-M */
 #define  SHARED_SCROFF0_MSB U(18) /* 1  shareable memory for the script with other scripts in mono processor platforms */
-#define  SHARED_SCROFF0_LSB U(18) /*                                    */
+#define  SHARED_SCROFF0_LSB U(18) /*      shared => reset registers are start, default is "not shared" (=0) */
 #define  OFFSET_SCROFF0_MSB U(17) /* 17 offset in the W32 script table */
 #define  OFFSET_SCROFF0_LSB U( 0) /*    placed at    */
 
@@ -506,7 +506,7 @@
     "analog user-interface" called (knobs / needles) give controls and visibility on NODE parameters and
     are accessed with scripts 
 
-    use 0 and 1 like "pre0post1"
+    use 0 and 1 like "pre0post1", loaded in instance->entry_param
 */
 #define SCRIPT_PRERUN 0u        /* executed before calling the node : the Z flag is set */
 #define SCRIPT_POSTRUN 1u       /* executed after */
@@ -559,7 +559,9 @@
 #define   WHOAMI_LW0_LSB U(24) 
 /*---------------------------*/
 #define un_______LW0_MSB U(23) 
-#define un_______LW0_LSB U(20) /*  4   */
+#define un_______LW0_LSB U(22) /*  2   */
+#define      OPP_LW0_MSB U(21) /*     OPP=1(low clock)/2/3(highest clock) 0=any*/
+#define      OPP_LW0_LSB U(20) /*  2  allows/block node execution based on the ->global_opp  */
 #define    ALLOC_LW0_MSB U(19) /*     graph compilation do not manage the memory allocation */  
 #define    ALLOC_LW0_LSB U(19) /*  1  the SWC dynamically returns the amount of memory it needs */
 #define      KEY_LW0_MSB U(18) 
@@ -913,7 +915,7 @@
 #define NEW_PARAM_ARCW1_LSB U(24) /*  1  notify a new parameter setting, script waits NEW_PARAM_ARCW =0 before loading new param */
 #define BUFF_SIZE_ARCW1_MSB SIZE_EXT_FMT0_MSB /*     */
 #define BUFF_SIZE_ARCW1_LSB SIZE_EXT_FMT0_LSB /* 24  */
-
+// if (command == NANOGRAPH_SET_PARAMETER) : 
 #define NEW_PARAM_ARCW1_BIT_LSB U(NEW_PARAM_ARCW1_LSB-24) /* bit-field access in a Byte */
 #define COLL2NEWPARAM_BYTES  (-4) /* -4 bytes offset to go from COLLISION_ARCW2 to NEW_PARAM_ARCW1 */ 
 #define COLLISION2CTRL_BYTES (-4)
@@ -938,10 +940,12 @@
 
 
 #define             FMT_ARCW4   U(4)
-#define    unused_ARCW4_MSB U(31) /*       */ 
-#define    unused_ARCW4_LSB U(26) /*  6    */
-#define    SCRIPT_ARCW4_MSB U(25) /*     log timestamps , wakeup instance application callback */
-#define    SCRIPT_ARCW4_LSB U(16) /* 10  compute : signal processing / peak detection */
+#define unused____ARCW4_MSB U(31) /*       */ 
+#define unused____ARCW4_LSB U(24) /*  6    */
+#define SCRIPTSEL_ARCW4_MSB U(31) /*     Script activated on R1/W2/Both3/Never0  */ 
+#define SCRIPTSEL_ARCW4_LSB U(24) /*  2    */
+#define    SCRIPT_ARCW4_MSB U(23) /*     log timestamps , wakeup instance application callback */
+#define    SCRIPT_ARCW4_LSB U(16) /*  8  peak detection , arc synchronicity RX/TX , script from Timer's ticks */
 #define CONSUMFMT_ARCW4_MSB U(15) /*      */
 #define CONSUMFMT_ARCW4_LSB U( 8) /*  8 bits CONSUMER format  */ 
 #define PRODUCFMT_ARCW4_MSB U( 7) /*  8 bits PRODUCER format  (intptr_t) +[i x NANOGRAPH_FORMAT_SIZE_W32]  */ 
@@ -1013,10 +1017,10 @@
 #define   SERVANT1_IOFMT0_LSB 12u   /* 1  1=IO_IS_SERVANT1 */
 #define     RX0TX1_IOFMT0_MSB 11u   /*    direction of the stream */
 #define     RX0TX1_IOFMT0_LSB 11u   /* 1  0 : to the graph    1 : from the graph */
-#define       _____IOFMT0_MSB 10u 
-#define       _____IOFMT0_LSB  6u   /*  5  */
-#define    IOARCID_IOFMT0_MSB  5u 
-#define    IOARCID_IOFMT0_LSB  0u   /*  6  Graph IO ARC*/
+#define        OPP_IOFMT0_MSB 10u   /* 2  operation performance point - equivalent to OPP_LW0 */
+#define        OPP_IOFMT0_LSB  9u   /*    allows/block IO activation based on the ->global_opp */
+#define    IOARCID_IOFMT0_MSB  8u 
+#define    IOARCID_IOFMT0_LSB  0u   /* 9  Graph IO ARC*/
 
 #define MAX_GRAPH_IO_IDX (1 << (IOARCID_IOFMT0_MSB - IOARCID_IOFMT0_LSB + 1))
 #define MAX_IO_ONGOING_BYTES (MAX_GRAPH_IO_IDX/8) // asynchronous/slave IOs managed by this instance/processor
